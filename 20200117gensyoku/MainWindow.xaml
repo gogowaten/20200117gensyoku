@@ -9,7 +9,7 @@
   <Grid>
     <Grid.ColumnDefinitions>
       <ColumnDefinition/>
-      <ColumnDefinition Width="150"/>
+      <ColumnDefinition Width="200"/>
     </Grid.ColumnDefinitions>
     <ScrollViewer Grid.Column="0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" UseLayoutRounding="True">
       <Grid x:Name="MyGrid" PreviewMouseLeftButtonDown="MyGrid_PreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="MyGrid_PreviewMouseLeftButtonUp">
@@ -18,24 +18,30 @@
       </Grid>
     </ScrollViewer>
     <StackPanel Grid.Column="1">
-      <Button Content="もとに戻す" x:Name="ButtonReset" Click="ButtonReset_Click"/>
-      <Button Content="シングル1" x:Name="ButtonExe1" Click="ButtonExe1_Click"/>
+      <StackPanel.Resources>
+        <Style TargetType="Button">
+          <Setter Property="HorizontalContentAlignment" Value="Left"/>
+          <Setter Property="Margin" Value="2,6,2,0"/>
+        </Style>
+      </StackPanel.Resources>
+      <Button Content="保存" Click="ButtonSaveImage_Click"/>
+      <Button Content="1:普通、シングルスレッド" x:Name="ButtonExe1" Click="ButtonExe1_Click"/>
       <TextBlock x:Name="tbTime1" Text="time"/>
-      <Button Content="シングル2" x:Name="ButtonExe2" Click="ButtonExe2_Click"/>
+      <Button Content="2:普通、シングルスレッド" x:Name="ButtonExe2" Click="ButtonExe2_Click"/>
       <TextBlock x:Name="tbTime2" Text="time"/>
-      <Button Content="マルチ1(ParallelFor)" x:Name="ButtonExe3" Click="ButtonExe3_Click"/>
+      <Button Content="3:Parallelでの並列処理(マルチスレッド)" x:Name="ButtonExe3" Click="ButtonExe3_Click"/>
       <TextBlock x:Name="tbTime3" Text="time"/>
-      <Button Content="マルチ2(Task)" x:Name="ButtonExe4" Click="ButtonExe4_Click"/>
+      <Button Content="4:Taskを使った並列処理、1ピクセルごとのRGBAのByte配列のリスト" x:Name="ButtonExe4" Click="ButtonExe4_Click"/>
       <TextBlock x:Name="tbTime4" Text="time"/>
-      <Button Content="マルチ3(Task)" x:Name="ButtonExe5" Click="ButtonExe5_Click"/>
+      <Button Content="5:Taskを使った並列処理" x:Name="ButtonExe5" Click="ButtonExe5_Click"/>
       <TextBlock x:Name="tbTime5" Text="time"/>
-      <Button Content="シングル1＋SIMD" x:Name="ButtonExe6" Click="ButtonExe6_Click"/>
+      <Button Content="6:シングルスレッド＋SIMD" x:Name="ButtonExe6" Click="ButtonExe6_Click"/>
       <TextBlock x:Name="tbTime6" Text="time"/>
-      <Button Content="マルチ1+SIMD" x:Name="ButtonExe7" Click="ButtonExe7_Click"/>
+      <Button Content="7:Parallelでの並列処理＋SIMD" x:Name="ButtonExe7" Click="ButtonExe7_Click"/>
       <TextBlock x:Name="tbTime7" Text="time"/>
-      <Button Content="マルチ2+SIMD" x:Name="ButtonExe8" Click="ButtonExe8_Click"/>
+      <Button Content="8:Taskを使った並列処理+SIMD、1ピクセルごとのRGBAのByte配列のリスト" x:Name="ButtonExe8" Click="ButtonExe8_Click"/>
       <TextBlock x:Name="tbTime8" Text="time"/>
-      <Button Content="マルチ3+SIMD" x:Name="ButtonExe9" Click="ButtonExe9_Click"/>
+      <Button Content="9:Taskを使った並列処理+SIMD" x:Name="ButtonExe9" Click="ButtonExe9_Click"/>
       <TextBlock x:Name="tbTime9" Text="time"/>
 
     </StackPanel>

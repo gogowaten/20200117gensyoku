@@ -12,10 +12,10 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using System.Diagnostics;
-using System.Numerics;
+using System.Diagnostics;//ストップウォッチ用
+using System.Numerics;//SIMDのVector用
 
-
+//参照したところ
 //小ネタ 並列化 | ++C++; // 未確認飛行 C ブログ
 //https://ufcpp.net/blog/2016/12/tipsparallelism/
 
@@ -29,27 +29,41 @@ namespace _20200117gensyoku
     {
         BitmapSource OriginBitmapSource;
         byte[] OriginPixels;
+        string ImageFileFullPath;
 
         public MainWindow()
         {
             InitializeComponent();
 
+            this.AllowDrop = true;
+            this.Drop += MainWindow_Drop;
 
-            //var neko = Enumerable.Range(2, 10);
-            //var core = Environment.ProcessorCount;
-            //Task.WhenAll(Enumerable.Range(0, core)
-            //    .Select(n => Task.Run(() =>
-            //  {
-
-            //  }))).GetAwaiter().GetResult();
-
-
-            string path = @"D:\ブログ用\チェック用2\WP_20200111_09_25_36_Pro_2020_01_11_午後わてん.jpg";
-            (OriginPixels, OriginBitmapSource) = MakeBitmapSourceAndPixelData(path, PixelFormats.Bgra32, 96, 96);
-            MyImageOrigin.Source = OriginBitmapSource;
+            //string path = @"D:\ブログ用\チェック用2\WP_20200111_09_25_36_Pro_2020_01_11_午後わてん.jpg";
+            //(OriginPixels, OriginBitmapSource) = MakeBitmapSourceAndPixelData(path, PixelFormats.Bgra32, 96, 96);
+            //MyImageOrigin.Source = OriginBitmapSource;
 
 
         }
+
+        private void MainWindow_Drop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop) == false) { return; }
+            string[] filePath = (string[])e.Data.GetData(DataFormats.FileDrop);
+            (OriginPixels, OriginBitmapSource) = MakeBitmapSourceAndPixelData(filePath[0], PixelFormats.Bgra32, 96, 96);
+
+            if (OriginBitmapSource == null)
+            {
+                MessageBox.Show("画像として開くことができなかった");
+            }
+            else
+            {
+                MyImageOrigin.Source = OriginBitmapSource;
+                MyImage.Source = OriginBitmapSource;
+                ImageFileFullPath = filePath[0];
+            }
+        }
+
+        //白、黒、赤、緑、青、黄色、水色、赤紫の固定8色パレット作成
         private List<byte[]> MakePalette()
         {
             List<byte[]> palette = new List<byte[]> {
@@ -63,6 +77,7 @@ namespace _20200117gensyoku
                 new byte[] { 255, 0, 255 } };
             return palette;
         }
+        //ランダム色パレット作成
         private List<byte[]> MakePalette(int count)
         {
             byte[] temp = new byte[count * 3];
@@ -77,15 +92,15 @@ namespace _20200117gensyoku
             return palette;
         }
 
-        //普通、シングルスレッド
-        private BitmapSource Zg1減色1(BitmapSource source, byte[] pixels, List<byte[]> palette)
+        //1:普通、シングルスレッド
+        private BitmapSource Zs1減色1(BitmapSource source, byte[] pixels, List<byte[]> palette)
         {
             byte[] zPixels = new byte[pixels.Length];
             for (int i = 0; i < OriginPixels.Length; i += 4)
             {
+                //パレットの中から、今のPixelの色に一番近い色を取得
                 double min = ColorDistance(pixels[i + 2], pixels[i + 1], pixels[i], palette[0]);
                 int pIndex = 0;
-                //パレットから一番近い色
                 for (int pc = 1; pc < palette.Count; pc++)
                 {
                     var distance = ColorDistance(pixels[i + 2], pixels[i + 1], pixels[i], palette[pc]);
@@ -104,8 +119,8 @@ namespace _20200117gensyoku
             return BitmapSource.Create(source.PixelWidth, source.PixelHeight, 96, 96, source.Format, null, zPixels, source.PixelWidth * 4);
         }
 
-        //普通、シングルスレッド
-        private BitmapSource Zg2減色2(BitmapSource source, byte[] pixels, List<byte[]> palette)
+        //2:普通、シングルスレッド
+        private BitmapSource Zs2減色2(BitmapSource source, byte[] pixels, List<byte[]> palette)
         {
             byte[] zPixels = new byte[pixels.Length];
             byte r, g, b;
@@ -132,8 +147,8 @@ namespace _20200117gensyoku
             return BitmapSource.Create(source.PixelWidth, source.PixelHeight, 96, 96, source.Format, null, zPixels, source.PixelWidth * 4);
         }
 
-        //Parallelでの並列処理
-        private BitmapSource Zg3減色3(BitmapSource source, byte[] pixels, List<byte[]> palette)
+        //3:Parallelでの並列処理
+        private BitmapSource ZmP減色3(BitmapSource source, byte[] pixels, List<byte[]> palette)
         {
             byte[] zPixels = new byte[pixels.Length];
             List<byte[]> MyList = MakeByteRGBA(pixels);//1ピクセルごとのRGBAのByte配列のリスト
@@ -159,8 +174,8 @@ namespace _20200117gensyoku
             return BitmapSource.Create(source.PixelWidth, source.PixelHeight, 96, 96, source.Format, null, zPixels, source.PixelWidth * 4);
         }
 
-        //Taskを使った並列処理、1ピクセルごとのRGBAのByte配列のリスト
-        private BitmapSource Zg4減色4(BitmapSource source, byte[] pixels, List<byte[]> palette)
+        //4:Taskを使った並列処理、1ピクセルごとのRGBAのByte配列のリスト
+        private BitmapSource ZmT1減色4(BitmapSource source, byte[] pixels, List<byte[]> palette)
         {
             byte[] zPixels = new byte[pixels.Length];
             List<byte[]> MyList = MakeByteRGBA(pixels);//1ピクセルごとのRGBAのByte配列のリスト
@@ -194,8 +209,8 @@ namespace _20200117gensyoku
             return BitmapSource.Create(source.PixelWidth, source.PixelHeight, 96, 96, source.Format, null, zPixels, source.PixelWidth * 4);
         }
 
-        //Taskを使った並列処理
-        private BitmapSource Zg5減色5(BitmapSource source, byte[] pixels, List<byte[]> palette)
+        //5:Taskを使った並列処理
+        private BitmapSource ZmT2減色5(BitmapSource source, byte[] pixels, List<byte[]> palette)
         {
             byte[] zPixels = new byte[pixels.Length];
             int MyThread = Environment.ProcessorCount;
@@ -231,8 +246,8 @@ namespace _20200117gensyoku
             return BitmapSource.Create(source.PixelWidth, source.PixelHeight, 96, 96, source.Format, null, zPixels, source.PixelWidth * 4);
         }
 
-        //シングルスレッド＋SIMD
-        private BitmapSource Zv1減色1(BitmapSource source, byte[] pixels, List<byte[]> palette)
+        //6:シングルスレッド＋SIMD
+        private BitmapSource Zs1SIMD減色6(BitmapSource source, byte[] pixels, List<byte[]> palette)
         {
             byte[] zPixels = new byte[pixels.Length];
             for (int i = 0; i < OriginPixels.Length; i += 4)
@@ -259,8 +274,8 @@ namespace _20200117gensyoku
             return BitmapSource.Create(source.PixelWidth, source.PixelHeight, 96, 96, source.Format, null, zPixels, source.PixelWidth * 4);
         }
 
-        //Parallelでの並列処理＋SIMD
-        private BitmapSource Zv3減色3(BitmapSource source, byte[] pixels, List<byte[]> palette)
+        //7:Parallelでの並列処理＋SIMD
+        private BitmapSource ZmPSIMD減色7(BitmapSource source, byte[] pixels, List<byte[]> palette)
         {
             byte[] zPixels = new byte[pixels.Length];
             List<byte[]> MyList = MakeByteRGBA(pixels);//1ピクセルごとのRGBAのByte配列のリスト
@@ -286,8 +301,8 @@ namespace _20200117gensyoku
             return BitmapSource.Create(source.PixelWidth, source.PixelHeight, 96, 96, source.Format, null, zPixels, source.PixelWidth * 4);
         }
 
-        //Taskを使った並列処理、1ピクセルごとのRGBAのByte配列のリスト
-        private BitmapSource Zv4減色4(BitmapSource source, byte[] pixels, List<byte[]> palette)
+        //8:Taskを使った並列処理+SIMD、1ピクセルごとのRGBAのByte配列のリスト
+        private BitmapSource ZmT1SIMD減色8(BitmapSource source, byte[] pixels, List<byte[]> palette)
         {
             byte[] zPixels = new byte[pixels.Length];
             List<byte[]> MyList = MakeByteRGBA(pixels);//1ピクセルごとのRGBAのByte配列のリスト
@@ -321,8 +336,8 @@ namespace _20200117gensyoku
             return BitmapSource.Create(source.PixelWidth, source.PixelHeight, 96, 96, source.Format, null, zPixels, source.PixelWidth * 4);
         }
 
-        //Taskを使った並列処理
-        private BitmapSource Zv5減色5(BitmapSource source, byte[] pixels, List<byte[]> palette)
+        //9:Taskを使った並列処理+SIMD
+        private BitmapSource ZmT2SIMD減色9(BitmapSource source, byte[] pixels, List<byte[]> palette)
         {
             byte[] zPixels = new byte[pixels.Length];
             int MyThread = Environment.ProcessorCount;
@@ -360,7 +375,7 @@ namespace _20200117gensyoku
 
 
 
-        //BGRAの配列をRGBAの4つごとのByteにする
+        //BGRAの配列をRGBAの4つごとのByteにする、ParallelForでの処理で使う
         private List<byte[]> MakeByteRGBA(byte[] pixels)
         {
             List<byte[]> MyList = new List<byte[]>();
@@ -372,96 +387,8 @@ namespace _20200117gensyoku
         }
 
 
-        private BitmapSource ReduceColor指定色で減色(BitmapSource source, List<Color> palette)
-        {
-            //if (OriginBitmap == null) { return source; }
-            //if (palette.Count == 0) { return source; }
-            var wb = new WriteableBitmap(source);
-            int h = wb.PixelHeight;
-            int w = wb.PixelWidth;
-            int stride = wb.BackBufferStride;
-            byte[] pixels = new byte[h * stride];
-            wb.CopyPixels(pixels, stride, 0);
-            for (int y = 0; y < h; ++y)
-            {
-                Parallel.For(0, w, x =>
-                {
-                    XParallel(y, stride, x, palette, pixels);
-                });
-            }
-            wb.WritePixels(new Int32Rect(0, 0, w, h), pixels, stride, 0);
 
-            return OptimisationPixelFormat(wb, palette.Count);
-        }
-
-        private void XParallel(int y, int stride, int x, List<Color> palette, byte[] pixels)
-        {
-            var p = y * stride + (x * 4);
-            var myColor = Color.FromRgb(pixels[p + 2], pixels[p + 1], pixels[p]);
-            double min, distance;
-            int pIndex;
-
-            min = GetColorDistance(myColor, palette[0]);
-            pIndex = 0;
-            for (int i = 0; i < palette.Count; ++i)
-            {
-                distance = GetColorDistance(myColor, palette[i]);
-                if (min > distance)
-                {
-                    min = distance;
-                    pIndex = i;
-                }
-            }
-            myColor = palette[pIndex];
-            pixels[p + 2] = myColor.R;
-            pixels[p + 1] = myColor.G;
-            pixels[p] = myColor.B;
-            pixels[p + 3] = 255;//アルファ値を255に変更、完全不透明にする
-        }
-
-
-        //PixelFormatを色数に合わせたものに変更、これもこれは色が変化してしまうかも？
-        private BitmapSource OptimisationPixelFormat(BitmapSource source, int colorCount)
-        {
-            PixelFormat pixelFormat;
-            if (colorCount <= 2)
-            {
-                pixelFormat = PixelFormats.Indexed1;
-            }
-            else if (colorCount <= 4)
-            {
-                pixelFormat = PixelFormats.Indexed2;
-            }
-            else if (colorCount <= 16)
-            {
-                pixelFormat = PixelFormats.Indexed4;
-            }
-            else if (colorCount <= 256)
-            {
-                pixelFormat = PixelFormats.Indexed8;
-            }
-            else
-            {
-                pixelFormat = PixelFormats.Bgr24;
-            }
-            return new FormatConvertedBitmap(source, pixelFormat, null, 0);
-        }
-
-        //距離
-        private double GetColorDistance(Color c1, Color c2)
-        {
-            return Math.Sqrt(
-                Math.Pow(c1.R - c2.R, 2) +
-                Math.Pow(c1.G - c2.G, 2) +
-                Math.Pow(c1.B - c2.B, 2));
-        }
-        private double GetColorDistance(double r, double g, double b, Color c)
-        {
-            return Math.Sqrt(
-                Math.Pow(c.R - r, 2) +
-                Math.Pow(c.G - g, 2) +
-                Math.Pow(c.B - b, 2));
-        }
+        //色の距離、Mathクラスで
         private double ColorDistance(byte r1, byte g1, byte b1, byte[] palette)
         {
             return Math.Sqrt(
@@ -476,6 +403,7 @@ namespace _20200117gensyoku
                 Math.Pow(RGBA[1] - palette[1], 2) +
                 Math.Pow(RGBA[2] - palette[2], 2));
         }
+        //色の距離、SIMDを使うVectorクラスで計算
         private float ColorDistanceV3(byte r1, byte g1, byte b1, byte[] palette)
         {
             Vector3 value1 = new Vector3(r1, g1, b1);
@@ -542,64 +470,98 @@ namespace _20200117gensyoku
         {
             Panel.SetZIndex(MyImageOrigin, -1);
         }
-        private void ButtonReset_Click(object sender, RoutedEventArgs e)
+        private void ButtonSaveImage_Click(object sender, RoutedEventArgs e)
         {
-            MyImage.Source = OriginBitmapSource;
+            SaveImage((BitmapSource)MyImage.Source);
         }
 
+        //処理時間計測
         private void MyTime(Func<BitmapSource, byte[], List<byte[]>, BitmapSource> func, TextBlock textBlock)
         {
+            if (OriginBitmapSource == null) return;
             var sw = new Stopwatch();
             sw.Start();
             //MyImage.Source = func(OriginBitmapSource, OriginPixels, MakePalette());
             MyImage.Source = func(OriginBitmapSource, OriginPixels, MakePalette(16));
             sw.Stop();
-            textBlock.Text = $"{sw.Elapsed.Seconds}秒{sw.Elapsed.Milliseconds}";
+            textBlock.Text = $"{sw.Elapsed.Seconds}秒{sw.Elapsed.Milliseconds.ToString("000")}";
         }
         private void ButtonExe1_Click(object sender, RoutedEventArgs e)
         {
-            MyTime(Zg1減色1, tbTime1);
+            MyTime(Zs1減色1, tbTime1);
         }
 
 
         private void ButtonExe2_Click(object sender, RoutedEventArgs e)
         {
-            MyTime(Zg2減色2, tbTime2);
+            MyTime(Zs2減色2, tbTime2);
         }
 
         private void ButtonExe3_Click(object sender, RoutedEventArgs e)
         {
-            MyTime(Zg3減色3, tbTime3);
+            MyTime(ZmP減色3, tbTime3);
         }
 
         private void ButtonExe4_Click(object sender, RoutedEventArgs e)
         {
-            MyTime(Zg4減色4, tbTime4);
+            MyTime(ZmT1減色4, tbTime4);
         }
 
         private void ButtonExe5_Click(object sender, RoutedEventArgs e)
         {
-            MyTime(Zg5減色5, tbTime5);
+            MyTime(ZmT2減色5, tbTime5);
         }
 
         private void ButtonExe6_Click(object sender, RoutedEventArgs e)
         {
-            MyTime(Zv1減色1, tbTime6);
+            MyTime(Zs1SIMD減色6, tbTime6);
         }
 
         private void ButtonExe7_Click(object sender, RoutedEventArgs e)
         {
-            MyTime(Zv3減色3, tbTime7);
+            MyTime(ZmPSIMD減色7, tbTime7);
         }
 
         private void ButtonExe8_Click(object sender, RoutedEventArgs e)
         {
-            MyTime(Zv4減色4, tbTime8);
+            MyTime(ZmT1SIMD減色8, tbTime8);
         }
 
         private void ButtonExe9_Click(object sender, RoutedEventArgs e)
         {
-            MyTime(Zv5減色5, tbTime9);
+            MyTime(ZmT2SIMD減色9, tbTime9);
+        }
+
+
+        private void SaveImage(BitmapSource source)
+        {
+            var saveFileDialog = new Microsoft.Win32.SaveFileDialog();
+            saveFileDialog.Filter = "*.png|*.png|*.bmp|*.bmp|*.tiff|*.tiff";
+            saveFileDialog.AddExtension = true;
+            saveFileDialog.FileName = System.IO.Path.GetFileNameWithoutExtension(ImageFileFullPath) + "_";
+            saveFileDialog.InitialDirectory = System.IO.Path.GetDirectoryName(ImageFileFullPath);
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                BitmapEncoder encoder = new BmpBitmapEncoder();
+                if (saveFileDialog.FilterIndex == 1)
+                {
+                    encoder = new PngBitmapEncoder();
+                }
+                else if (saveFileDialog.FilterIndex == 2)
+                {
+                    encoder = new BmpBitmapEncoder();
+                }
+                else if (saveFileDialog.FilterIndex == 3)
+                {
+                    encoder = new TiffBitmapEncoder();
+                }
+                encoder.Frames.Add(BitmapFrame.Create(source));
+
+                using (var fs = new System.IO.FileStream(saveFileDialog.FileName, System.IO.FileMode.Create, System.IO.FileAccess.Write))
+                {
+                    encoder.Save(fs);
+                }
+            }
         }
     }
 }
