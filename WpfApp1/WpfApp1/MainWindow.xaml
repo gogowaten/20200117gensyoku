@@ -8,9 +8,6 @@
         Title="MainWindow" Height="450" Width="800">
   <Grid>
     <StackPanel>
-      <TextBlock Text="1455test"/>
-      <TextBlock Text="1456test"/>
-      <TextBlock Text="1456-1500"/>
       <TextBlock Text="1519"/>
     </StackPanel>
   </Grid>
