@@ -9,6 +9,7 @@
   <Grid>
     <StackPanel>
       <TextBlock Text="1519"/>
+      <TextBlock Text="1746"/>
     </StackPanel>
   </Grid>
 </Window>
