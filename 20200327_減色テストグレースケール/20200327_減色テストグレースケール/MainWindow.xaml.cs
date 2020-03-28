@@ -52,6 +52,8 @@ namespace _20200327_減色テストグレースケール
             ButtonListClear.Click += ButtonListClear_Click;
             MyImage.Source = MyOriginBitmap;
             ButtonImageStretch.Click += ButtonImageStretch_Click;
+            MyImageGrid.MouseLeftButtonDown += (s, e) => Panel.SetZIndex(MyImageOrigin, 1);//前面へ
+            MyImageGrid.MouseLeftButtonUp += (s, e) => Panel.SetZIndex(MyImageOrigin, -1);//背面へ
 
 
             //コンボボックスの初期化
@@ -69,20 +71,27 @@ namespace _20200327_減色テストグレースケール
 
         }
 
+      
+
         //画像の表示方式切り替え、実寸or全体表示
         private void ButtonImageStretch_Click(object sender, RoutedEventArgs e)
         {
             if (MyImage.Stretch == Stretch.None)
             {
+                MyImageOrigin.Stretch = Stretch.Uniform;
                 MyImage.Stretch = Stretch.Uniform;
                 MyScrollViewerImage.Content = null;
-                MyDockPanelImage.Children.Add(MyImage);
+                //MyImageDockPanel.Children.Add(MyImage);
+                MyImageDockPanel.Children.Add(MyImageGrid); 
             }
             else
             {
+                MyImageOrigin.Stretch = Stretch.None;
                 MyImage.Stretch = Stretch.None;
-                MyDockPanelImage.Children.Remove(MyImage);
-                MyScrollViewerImage.Content = MyImage;
+                //MyImageDockPanel.Children.Remove(MyImage);
+                MyImageDockPanel.Children.Remove(MyImageGrid);
+                //MyScrollViewerImage.Content = MyImage;
+                MyScrollViewerImage.Content = MyImageGrid;
             }
         }
 
@@ -176,6 +185,7 @@ namespace _20200327_減色テストグレースケール
 
             MyOriginBitmap = Clipboard.GetImage();
             MyOriginBitmap = new FormatConvertedBitmap(MyOriginBitmap, PixelFormats.Gray8, null, 0);
+            MyImageOrigin.Source = MyOriginBitmap;
             MyImage.Source = MyOriginBitmap;
             int w = MyOriginBitmap.PixelWidth;
             int h = MyOriginBitmap.PixelHeight;
@@ -200,6 +210,7 @@ namespace _20200327_減色テストグレースケール
             {
                 MyOriginBitmap = source;
                 MyOriginPixels = pixels;
+                MyImageOrigin.Source = source;
                 MyImage.Source = source;
                 ClearPalettes();//パレットリスト初期化
                 ImageFileFullPath = System.IO.Path.GetFullPath(filePath[0]);//ファイルのフルパス取得

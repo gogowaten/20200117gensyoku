@@ -21,10 +21,13 @@
       <ColumnDefinition Width="320"/>
     </Grid.ColumnDefinitions>
 
-    <DockPanel Grid.Column="0" Name="MyDockPanelImage">
+    <DockPanel Grid.Column="0" Name="MyImageDockPanel">
       <Button DockPanel.Dock="Top" x:Name="ButtonImageStretch" Content="実寸or全体" Margin="4"/>
       <ScrollViewer DockPanel.Dock="Top" x:Name="MyScrollViewerImage" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-        <Image x:Name="MyImage" Stretch="None" UseLayoutRounding="True"/>
+        <Grid x:Name="MyImageGrid">
+          <Image x:Name="MyImageOrigin" Stretch="None" UseLayoutRounding="True"/>
+          <Image x:Name="MyImage" Stretch="None" UseLayoutRounding="True"/>
+        </Grid>
       </ScrollViewer>
     </DockPanel>
 
