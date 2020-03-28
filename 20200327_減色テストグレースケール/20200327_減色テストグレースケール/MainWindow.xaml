@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:_20200327_減色テストグレースケール"
         mc:Ignorable="d"
-         Title="MainWindow" Height="400" Width="614">
+         Title="MainWindow" Height="500" Width="614">
   <Window.Resources>
     <Style TargetType="StackPanel">
       <Setter Property="Margin" Value="4,1,0,0"/>
@@ -36,6 +36,25 @@
         <Button x:Name="ButtonListClear" Content="パレットリストクリア"/>
         <Button x:Name="ButtonGetClipboardImage" Content="クリップボードの画像取得"/>
       </StackPanel>
+      <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Height="30">
+        <Button x:Name="ButtonSave" Content="画像保存" Click="ButtonSave_Click"/>
+        <Button x:Name="ButtonTest" Content="test" Click="ButtonTest_Click"/>
+      </StackPanel>
+
+      <GroupBox DockPanel.Dock="Top" Header="一覧作成">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+          </Grid.ColumnDefinitions>
+          <RadioButton Content="選択" Grid.Column="0" Name="RadioButtonPaletteSelect"/>
+          <RadioButton Content="分割" Grid.Column="1" Name="RadioButtonPaletteSplit"/>
+          <RadioButton Content="色選択" Grid.Column="2" Name="RadioButtonPaletteColorSelect"/>
+          <RadioButton Content="フリー" Grid.Column="3" Name="RadioButtonPaletteFree" IsChecked="True"/>
+        </Grid>
+      </GroupBox>
 
       <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
         <StackPanel>
@@ -50,8 +69,6 @@
           <TextBlock Text="色選択方法"/>
           <ComboBox Name="ComboBoxColorSelectType"/>
         </StackPanel>
-        <Button x:Name="ButtonSave" Content="画像保存" Click="ButtonSave_Click"/>
-        <Button x:Name="ButtonTest" Content="test" Click="ButtonTest_Click"/>
       </StackPanel>
       <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
         <StackPanel.Resources>

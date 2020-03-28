@@ -71,7 +71,7 @@ namespace _20200327_減色テストグレースケール
 
         }
 
-      
+
 
         //画像の表示方式切り替え、実寸or全体表示
         private void ButtonImageStretch_Click(object sender, RoutedEventArgs e)
@@ -82,7 +82,7 @@ namespace _20200327_減色テストグレースケール
                 MyImage.Stretch = Stretch.Uniform;
                 MyScrollViewerImage.Content = null;
                 //MyImageDockPanel.Children.Add(MyImage);
-                MyImageDockPanel.Children.Add(MyImageGrid); 
+                MyImageDockPanel.Children.Add(MyImageGrid);
             }
             else
             {
@@ -110,12 +110,17 @@ namespace _20200327_減色テストグレースケール
             TextBlockTime.Text = "";
         }
 
-
+        //パレット作成ボタン押した時
         private void ButtonMakePalette_Click(object sender, RoutedEventArgs e)
         {
             Button button = (Button)sender;
             int colorCount = int.Parse(button.Content.ToString());
-            MakePaletteColor(colorCount);
+            if (RadioButtonPaletteColorSelect.IsChecked == true)
+                MakePaletteAllColorSelectType(colorCount);//色選択方法すべてのパレット
+            else if (RadioButtonPaletteSelect.IsChecked == true)
+                MakePaletteAllSelectType(colorCount);
+            else
+                MakePaletteColor(colorCount);//フリー
         }
 
         //減色パレット作成
@@ -126,26 +131,14 @@ namespace _20200327_減色テストグレースケール
             var sw = new Stopwatch();
             sw.Start();
 
-            SelectType selecter = (SelectType)ComboBoxSelectType.SelectedItem;
-            SplitType splitter = (SplitType)ComboBoxSplitType.SelectedItem;
-            var cube = new Cube(MyOriginPixels);
-            cube.Split(colorCount, selecter, splitter);//分割数指定でCube分割
+            //指定色数に分割したCube作成
+            Cube cube = MakeSplittedCube(colorCount);
 
             //Cubeから色取得して、色データ作成
             List<Color> colors = cube.GetColors((ColorSelectType)ComboBoxColorSelectType.SelectedItem);
 
-            //Palette作成して表示
-            Palette palette = new Palette(colors);
-            MyPalettes.Add(palette);
-
-            var button = new Button() { Content = "減色" };
-            button.Click += ButtonGensyoku_Click;
-            var panel = new StackPanel() { Orientation = Orientation.Horizontal };
-            panel.Children.Add(button);
-            panel.Children.Add(palette);
-            MyStackPanel.Children.Add(panel);
-
-            MyDictionary.Add(button, palette);
+            //パレット作成して追加表示
+            MakePaletteStackPanel(colors);
 
             sw.Stop();
             //TextBlockTime.Text = $"{sw.Elapsed.TotalSeconds.ToString("F3")}";
@@ -158,7 +151,71 @@ namespace _20200327_減色テストグレースケール
             //list.DataContext = data;
             ////MyStackPanel.Children.Add(list);
             //MyStackPanel.Children.Add(MakePanelPalette(list, colors.Count));
+        }
+        //指定色数に分割したCube作成
+        private Cube MakeSplittedCube(int colorCount)
+        {
+            if (MyOriginBitmap == null) return null;
+            SelectType selecter = (SelectType)ComboBoxSelectType.SelectedItem;
+            SplitType splitter = (SplitType)ComboBoxSplitType.SelectedItem;
+            var cube = new Cube(MyOriginPixels);
+            cube.Split(colorCount, selecter, splitter);//分割数指定でCube分割
+            return cube;
+        }
 
+        //パレット一覧作成、Cubeからの色取得方法すべてのパレット
+        private void MakePaletteAllColorSelectType(int colorCount)
+        {
+            if (MyOriginBitmap == null) return;
+            var sw = new Stopwatch();
+            sw.Start();
+            //指定色数に分割したCube作成
+            Cube cube = MakeSplittedCube(colorCount);
+
+            foreach (var item in Enum.GetValues(typeof(ColorSelectType)))
+            {
+                //Cubeから色取得して、色データ作成
+                //パレット作成して追加表示
+                MakePaletteStackPanel(cube.GetColors((ColorSelectType)item));
+            }
+            sw.Stop();
+            TextBlockTime.Text = $"{sw.Elapsed.TotalSeconds:F3}({Enum.GetValues(typeof(ColorSelectType)).Length}個のパレット作成時間)";
+        }
+        //パレット一覧作成、Cube選択方法すべてのパレット
+        private void MakePaletteAllSelectType(int colorCount)
+        {
+            if (MyOriginBitmap == null) return;
+            var cube = new Cube(MyOriginPixels);
+            var splitter = (SplitType)ComboBoxSplitType.SelectedItem;
+            var colorType = (ColorSelectType)ComboBoxColorSelectType.SelectedItem;
+            foreach (var type in Enum.GetValues(typeof(SelectType)))
+            {
+                cube.Split(colorCount, (SelectType)type, splitter);
+                MakePaletteStackPanel(cube.GetColors(colorType));
+            }
+        }
+        //パレット一覧作成、Cube分割方法すべてのパレット
+        private void MakePaletteAllSelectType(int colorCount)
+        {
+
+        }
+
+
+
+        //List<Color>からパレット作成して減色ボタン付きstackPanel作成してstackPanelに追加
+        private void MakePaletteStackPanel(List<Color> colors)
+        {
+            var palette = new Palette(colors);
+            MyPalettes.Add(palette);
+            var button = new Button() { Content = "減色" };//減色ボタン
+            button.Click += ButtonGensyoku_Click;
+            var panel = new StackPanel() { Orientation = Orientation.Horizontal };
+            panel.Children.Add(button);
+            panel.Children.Add(palette);
+            MyStackPanel.Children.Add(panel);//表示
+            //表示更新
+            this.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Background);            
+            MyDictionary.Add(button, palette);
         }
 
         private void ButtonGensyoku_Click(object sender, RoutedEventArgs e)
@@ -267,6 +324,7 @@ namespace _20200327_減色テストグレースケール
 
         private void ButtonTest_Click(object sender, RoutedEventArgs e)
         {
+
             var neko = MyDictionary;
 
         }
@@ -281,7 +339,7 @@ namespace _20200327_減色テストグレースケール
 
             //初期フォルダ指定、開いている画像と同じフォルダ
             saveFileDialog.InitialDirectory = System.IO.Path.GetDirectoryName(ImageFileFullPath);
-            saveFileDialog.FileName = System.IO.Path.GetFileNameWithoutExtension(ImageFileFullPath)+"_";
+            saveFileDialog.FileName = System.IO.Path.GetFileNameWithoutExtension(ImageFileFullPath) + "_";
             if (saveFileDialog.ShowDialog() == true)
             {
                 BitmapEncoder encoder = null;
