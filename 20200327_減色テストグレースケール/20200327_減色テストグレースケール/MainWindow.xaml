@@ -18,8 +18,8 @@
 
     <Grid.ColumnDefinitions>
       <ColumnDefinition/>
-      <!--<ColumnDefinition Width="auto"/>-->
-      <ColumnDefinition Width="320" MinWidth="320"/>
+      <ColumnDefinition Width="auto"/>
+      <ColumnDefinition Width="320" MinWidth="320" MaxWidth="1200"/>
     </Grid.ColumnDefinitions>
 
     <DockPanel Grid.Column="0" Name="MyImageDockPanel">
@@ -31,12 +31,10 @@
         </Grid>
       </ScrollViewer>
     </DockPanel>
+  
+    <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Width="4" Background="HotPink"/>
 
-    <!--WPF Tips(3) Splitterで画面を分割する - 気楽なソフト工房
-http://csfun.blog49.fc2.com/blog-entry-70.html-->    
-    <GridSplitter VerticalAlignment="Stretch" Width="4" Background="HotPink"/>
-
-    <DockPanel Grid.Column="1" Width="auto">
+    <DockPanel Grid.Column="2" Width="auto">
       <StackPanel DockPanel.Dock="Top">
         <Button x:Name="ButtonGetClipboardImage" Content="クリップボードの画像取得"/>
       </StackPanel>
