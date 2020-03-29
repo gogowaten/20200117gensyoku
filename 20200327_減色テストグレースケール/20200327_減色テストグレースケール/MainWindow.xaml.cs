@@ -350,6 +350,7 @@ namespace _20200327_減色テストグレースケール
         //画像を保存
         private void ButtonSave_Click(object sender, RoutedEventArgs e)
         {
+            if (MyOriginBitmap == null) return;
             var saveFileDialog = new Microsoft.Win32.SaveFileDialog();
             //saveFileDialog.Filter = "*.png|*.png|*.jpg|*.jpg;*.jpeg|*.bmp|*.bmp|*.gif|*.gif|*.tiff|*.tiff|*.wdp|*.wdp;*jxr";
             saveFileDialog.Filter = "*.png|*.png|*.jpg|*.jpg;*.jpeg|*.bmp|*.bmp|*.gif|*.gif";
