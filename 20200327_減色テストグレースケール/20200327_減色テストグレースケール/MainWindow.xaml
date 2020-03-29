@@ -18,11 +18,12 @@
 
     <Grid.ColumnDefinitions>
       <ColumnDefinition/>
-      <ColumnDefinition Width="320"/>
+      <!--<ColumnDefinition Width="auto"/>-->
+      <ColumnDefinition Width="320" MinWidth="320"/>
     </Grid.ColumnDefinitions>
 
     <DockPanel Grid.Column="0" Name="MyImageDockPanel">
-      <Button DockPanel.Dock="Top" x:Name="ButtonImageStretch" Content="実寸or全体" Margin="4"/>
+      <Button DockPanel.Dock="Top" x:Name="ButtonImageStretch" Content="実寸or全体" Margin="10"/>
       <ScrollViewer DockPanel.Dock="Top" x:Name="MyScrollViewerImage" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
         <Grid x:Name="MyImageGrid">
           <Image x:Name="MyImageOrigin" Stretch="None" UseLayoutRounding="True"/>
@@ -31,17 +32,24 @@
       </ScrollViewer>
     </DockPanel>
 
-    <DockPanel Grid.Column="1" Width="320">
+    <!--[WPF] GridSplitter 画面を分割して境界線をドラッグしてリサイズする - ざこノート
+https://note.dokeep.jp/post/wpf-gridsplitter/-->
+    <!--<GridSplitter Grid.Column="1" Width="4" Background="Red" HorizontalAlignment="Stretch"/>-->
+    <GridSplitter VerticalAlignment="Stretch" Width="4" Background="HotPink"/>
+
+    <DockPanel Grid.Column="1" Width="auto">
       <StackPanel DockPanel.Dock="Top">
-        <Button x:Name="ButtonListClear" Content="パレットリストクリア"/>
         <Button x:Name="ButtonGetClipboardImage" Content="クリップボードの画像取得"/>
       </StackPanel>
       <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Height="30">
         <Button x:Name="ButtonSave" Content="画像保存" Click="ButtonSave_Click"/>
         <Button x:Name="ButtonTest" Content="test" Click="ButtonTest_Click"/>
+        <!--<Button x:Name="ButtonColorSort" Content="色ソート"/>
+        <RadioButton Content="保存時のbpp"/>
+        <TextBlock Text="パレット作成識別"/>-->
       </StackPanel>
 
-      <GroupBox DockPanel.Dock="Top" Header="一覧作成">
+      <GroupBox DockPanel.Dock="Top" Header="パレット一覧作成タイプ">
         <Grid>
           <Grid.ColumnDefinitions>
             <ColumnDefinition/>
@@ -56,15 +64,18 @@
         </Grid>
       </GroupBox>
 
+        <Button x:Name="ButtonListClear" Content="パレットリストクリア" DockPanel.Dock="Top"/>
       <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
         <StackPanel>
           <TextBlock Text="選択方法"/>
           <ComboBox Name="ComboBoxSelectType"/>
         </StackPanel>
+        <TextBlock Text="+" VerticalAlignment="Bottom" Margin="4,0,0,4"/>
         <StackPanel>
           <TextBlock Text="分割方法"/>
           <ComboBox Name="ComboBoxSplitType"/>
         </StackPanel>
+        <TextBlock Text="+" VerticalAlignment="Bottom" Margin="4,0,0,4"/>
         <StackPanel>
           <TextBlock Text="色選択方法"/>
           <ComboBox Name="ComboBoxColorSelectType"/>

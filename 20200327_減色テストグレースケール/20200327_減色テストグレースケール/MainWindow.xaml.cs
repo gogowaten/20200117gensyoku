@@ -119,6 +119,8 @@ namespace _20200327_減色テストグレースケール
                 MakePaletteAllColorSelectType(colorCount);//色選択方法すべてのパレット
             else if (RadioButtonPaletteSelect.IsChecked == true)
                 MakePaletteAllSelectType(colorCount);
+            else if (RadioButtonPaletteSplit.IsChecked == true)
+                MakePaletteAllSplitType(colorCount);
             else
                 MakePaletteColor(colorCount);//フリー
         }
@@ -144,7 +146,7 @@ namespace _20200327_減色テストグレースケール
             //TextBlockTime.Text = $"{sw.Elapsed.TotalSeconds.ToString("F3")}";
             //↑は↓と同じ、F3は小数点以下3桁まで表示の意味
             //TextBlockTime.Text = $"{sw.Elapsed.TotalSeconds:F3}";
-            TextBlockTime.Text = $"{sw.Elapsed.TotalSeconds:F3}(パレット作成時間)";
+            TextBlockTime.Text = $"{sw.Elapsed.TotalSeconds:F3}(パレット作成処理時間)";
 
             ////色データ表示用のlistboxを作成して表示
             //ListBox list = CreateListBox();
@@ -179,12 +181,14 @@ namespace _20200327_減色テストグレースケール
                 MakePaletteStackPanel(cube.GetColors((ColorSelectType)item));
             }
             sw.Stop();
-            TextBlockTime.Text = $"{sw.Elapsed.TotalSeconds:F3}({Enum.GetValues(typeof(ColorSelectType)).Length}個のパレット作成時間)";
+            TextBlockTime.Text = $"{sw.Elapsed.TotalSeconds:F3}({Enum.GetValues(typeof(ColorSelectType)).Length}個のパレット作成処理時間)";
         }
         //パレット一覧作成、Cube選択方法すべてのパレット
         private void MakePaletteAllSelectType(int colorCount)
         {
             if (MyOriginBitmap == null) return;
+            var sw = new Stopwatch();
+            sw.Start();
             var cube = new Cube(MyOriginPixels);
             var splitter = (SplitType)ComboBoxSplitType.SelectedItem;
             var colorType = (ColorSelectType)ComboBoxColorSelectType.SelectedItem;
@@ -193,11 +197,25 @@ namespace _20200327_減色テストグレースケール
                 cube.Split(colorCount, (SelectType)type, splitter);
                 MakePaletteStackPanel(cube.GetColors(colorType));
             }
+            sw.Stop();
+            TextBlockTime.Text = $"{sw.Elapsed.TotalSeconds:F3}({Enum.GetValues(typeof(SelectType)).Length}個のパレット作成処理時間)";
         }
         //パレット一覧作成、Cube分割方法すべてのパレット
-        private void MakePaletteAllSelectType(int colorCount)
+        private void MakePaletteAllSplitType(int colorCount)
         {
-
+            if (MyOriginBitmap == null) return;
+            var sw = new Stopwatch();
+            sw.Start();
+            var cube = new Cube(MyOriginPixels);
+            var selecter = (SelectType)ComboBoxSelectType.SelectedItem;
+            var colorType = (ColorSelectType)ComboBoxColorSelectType.SelectedItem;
+            foreach (var type in Enum.GetValues(typeof(SplitType)))
+            {
+                cube.Split(colorCount, selecter, (SplitType)type);
+                MakePaletteStackPanel(cube.GetColors(colorType));
+            }
+            sw.Stop();
+            TextBlockTime.Text = $"{sw.Elapsed.TotalSeconds:F3}({Enum.GetValues(typeof(SplitType)).Length}個のパレット作成処理時間)";
         }
 
 
@@ -227,7 +245,7 @@ namespace _20200327_減色テストグレースケール
             //byte[] vs = palette.Gensyoku(MyOriginPixels);//変換テーブル不使用
             byte[] vs = palette.GensyokuUseTable(MyOriginPixels);//変換テーブル使用
             sw.Stop();
-            TextBlockTime.Text = $"{sw.Elapsed.TotalSeconds:F3}(減色変換時間)";
+            TextBlockTime.Text = $"{sw.Elapsed.TotalSeconds:F3}(減色変換処理時間)";
             int stride = MyOriginBitmap.PixelWidth;// * MyOriginBitmap.Format.BitsPerPixel / 8;
             MyImage.Source = BitmapSource.Create(MyOriginBitmap.PixelWidth, MyOriginBitmap.PixelHeight, 96, 96, MyOriginBitmap.Format, null, vs, stride);
         }
@@ -737,7 +755,7 @@ namespace _20200327_減色テストグレースケール
                 aTotal += temp;
                 bTotal += temp * i;
             }
-            double averageSquare = aTotal / pixelsCount;//平均
+            double averageSquare = aTotal / (double)pixelsCount;//平均
             averageSquare *= averageSquare;//平均の2乗
             double squareAverage = bTotal / (double)pixelsCount;//2乗の平均
             return squareAverage - averageSquare;//分散 = 2乗の平均 - 平均の2乗
