@@ -32,9 +32,8 @@
       </ScrollViewer>
     </DockPanel>
 
-    <!--[WPF] GridSplitter 画面を分割して境界線をドラッグしてリサイズする - ざこノート
-https://note.dokeep.jp/post/wpf-gridsplitter/-->
-    <!--<GridSplitter Grid.Column="1" Width="4" Background="Red" HorizontalAlignment="Stretch"/>-->
+    <!--WPF Tips(3) Splitterで画面を分割する - 気楽なソフト工房
+http://csfun.blog49.fc2.com/blog-entry-70.html-->    
     <GridSplitter VerticalAlignment="Stretch" Width="4" Background="HotPink"/>
 
     <DockPanel Grid.Column="1" Width="auto">
