@@ -232,7 +232,7 @@ namespace _20200327_減色テストグレースケール
             panel.Children.Add(palette);
             MyStackPanel.Children.Add(panel);//表示
             //表示更新
-            this.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Background);            
+            this.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Background);
             MyDictionary.Add(button, palette);
         }
 
@@ -400,6 +400,21 @@ namespace _20200327_減色テストグレースケール
 
             }
         }
+
+        //パレットソート
+        private void ButtonColorSort_Click(object sender, RoutedEventArgs e)
+        {
+            if (MyPalettes.Count == 0) return;
+            foreach (var item in MyPalettes)
+            {
+                //昇順ソート
+                item.SortColor(System.ComponentModel.ListSortDirection.Ascending);
+                //降順ソート
+                //item.SortColor(System.ComponentModel.ListSortDirection.Descending);
+            }
+
+
+        }
         ////保存時の初期ファイル名取得
         //private string GetSaveFileName()
         //{
@@ -444,6 +459,18 @@ namespace _20200327_減色テストグレースケール
             //Panel作成
             MakePanelPalette(list, colors.Count);
 
+        }
+
+
+        //        C#のWPFでCollectionViewを使ってリスト表示をソート - Ararami Studio
+        //https://araramistudio.jimdo.com/2016/10/27/wpf%E3%81%AEcollectionview%E3%82%92%E4%BD%BF%E3%81%A3%E3%81%A6%E3%83%AA%E3%82%B9%E3%83%88%E8%A1%A8%E7%A4%BA%E3%82%92%E3%82%BD%E3%83%BC%E3%83%88/
+
+        //パレット色ソート
+        public void SortColor(System.ComponentModel.ListSortDirection listSortDirection)
+        {
+            var cv = CollectionViewSource.GetDefaultView(this.Datas);
+            cv.SortDescriptions.Clear();
+            cv.SortDescriptions.Add(new System.ComponentModel.SortDescription(nameof(MyData.GrayScaleValue), listSortDirection));
         }
 
         #region 誤差拡散で減色
@@ -641,7 +668,7 @@ namespace _20200327_減色テストグレースケール
         public bool IsCalcPixelsSorted = false;
         public double Variance;//分散
         public bool IsCalcVariance = false;//分散を計算済みフラグ用
-        public int[] Histogram;//大津の2値化用ヒストグラム
+        public int[] Histogram;//大津の2値化や、Kittlerの方法用ヒストグラム
         public bool IsHistogram = false;//ヒストグラムを作成したフラグ用
 
 
@@ -820,33 +847,21 @@ namespace _20200327_減色テストグレースケール
         #endregion 分散を求める
         #endregion 分割するCube選択
 
+
+
         #region 選択されたCubeを2分割
-        private (Cube cubeA, Cube cubeB) SplitCube(Cube cube, SplitType split)
+        private int GetThreshold(Cube cube, SplitType split)
         {
-            var aPix = new List<byte>();
-            var bPix = new List<byte>();
-            Cube aCube = null;
-            Cube bCube = null;
-            //辺の中央で分割
+            int threshold = 1;
+            //辺の中央をしきい値にする
             if (split == SplitType.SideCenter)
             {
                 if (cube.IsCalcMinMax == false) CalcMinMax(cube);
                 int mid = (int)((cube.Max + cube.Min) / 2.0);
-                foreach (var item in cube.Pixels)
-                {
-                    if (item > mid)
-                    {
-                        aPix.Add(item);
-                    }
-                    else
-                    {
-                        bPix.Add(item);
-                    }
-                }
-                aCube = new Cube(aPix.ToArray());
-                bCube = new Cube(bPix.ToArray());
+                threshold = mid;
             }
-            //中央値で2分割
+
+            //中央値をしきい値にする
             else if (split == SplitType.Median)
             {
                 if (cube.IsCalcPixelsSorted == false)
@@ -859,23 +874,14 @@ namespace _20200327_減色テストグレースケール
                     IsCalcPixelsSorted = true;
                 }
                 int mid = cube.SortedPixels[cube.SortedPixels.Length / 2];
-
-                foreach (var item in cube.Pixels)
-                {
-                    if (item > mid)
-                        aPix.Add(item);
-                    else
-                        bPix.Add(item);
-                }
-                aCube = new Cube(aPix.ToArray());
-                bCube = new Cube(bPix.ToArray());
+                threshold = mid;
             }
 
             //大津の2値化
             //X ＝ a画素割合＊b画素割合＊(a平均輝度 - b平均輝度)^2
             else if (split == SplitType.Ootu)
             {
-                //ヒストグラム作成
+                //ヒストグラムがなければ作成
                 if (cube.IsHistogram == false)
                 {
                     cube.Histogram = MakeHistogram(cube.Pixels);
@@ -890,7 +896,7 @@ namespace _20200327_減色テストグレースケール
                 }
                 //大津の2値化を使って得られるしきい値で2分割
                 double maxX = 0;
-                int threshold = 1;
+                //int threshold = 1;
                 for (int i = cube.Min; i < cube.Max; i++)
                 {
                     int aCount = CountHistogram(cube.Histogram, cube.Min, i);
@@ -906,20 +912,63 @@ namespace _20200327_減色テストグレースケール
                         threshold = i;
                     }
                 }
-                foreach (var item in cube.Pixels)
-                {
-                    //しきい値未満と以上で振り分ける、これだとグレースケールを2色にすると63,191になる
-                    //しきい値以下とそれ以外で振り分ける、これだとグレースケールを2色にすると64，192になる
-                    if (item > threshold)
-                        aPix.Add(item);
-                    else
-                        bPix.Add(item);
-                }
-                aCube = new Cube(aPix.ToArray());
-                bCube = new Cube(bPix.ToArray());
+
             }
 
-            return (aCube, bCube);
+            //Kittlerの方法でしきい値を求める
+            //E = A画素割合 * Log10(A分散 / A画素割合) + B画素割合 * Log10(B分散 / B画素割合)
+            //Eが最小になるしきい値
+            else if (split == SplitType.Kittler)
+            {
+                //ヒストグラムがなければ作成
+                if (cube.IsHistogram == false)
+                {
+                    cube.Histogram = MakeHistogram(cube.Pixels);
+                    cube.IsHistogram = true;
+                }
+                //MinMaxが未計算なら計算
+                if (cube.IsCalcMinMax == false)
+                {
+                    CalcMinMax(cube);
+                    cube.IsCalcMinMax = true;
+                }
+                double min = double.MaxValue;
+                double aError, bError;
+                for (int i = cube.Min; i < cube.Max; i++)
+                {
+                    aError = KittlerSub(cube.Histogram, cube.Min, i, cube.Pixels.Length);
+                    bError = KittlerSub(cube.Histogram, i + 1, cube.Max, cube.Pixels.Length);
+                    var E = aError + bError;
+                    if (E < min)
+                    {
+                        min = E;
+                        threshold = i;
+                    }
+                }
+            }
+            return threshold;
+
+        }
+
+        //しきい値でCubeを2分割
+        private (Cube cubeA, Cube cubeB) SplitCube(Cube cube, SplitType split)
+        {
+            //しきい値を求める
+            int threshold = GetThreshold(cube, split);
+
+            var aPix = new List<byte>();
+            var bPix = new List<byte>();
+            //しきい値で2分割
+            foreach (var item in cube.Pixels)
+            {
+                //しきい値未満と以上で振り分ける、これだとグレースケールを2色にすると63,191になる
+                //しきい値以下とそれ以外で振り分ける、これだとグレースケールを2色にすると64，192になる
+                if (item > threshold)
+                    aPix.Add(item);
+                else
+                    bPix.Add(item);
+            }
+            return (new Cube(aPix.ToArray()), new Cube(bPix.ToArray()));
         }
         #endregion 分割
 
@@ -1025,22 +1074,82 @@ namespace _20200327_減色テストグレースケール
             return histogram;
         }
 
+
+
+        /// <summary>
+        /// ヒストグラムの指定範囲の誤差を返す、誤差 = 要素の比率 * Log10(分散 / 要素の比率)
+        /// </summary>
+        /// <param name="histogram"></param>
+        /// <param name="begin">範囲の開始点</param>
+        /// <param name="end">範囲の終わり(未満なので、100指定なら99まで計算する)</param>
+        /// <returns></returns>
+        private double KittlerSub(int[] histogram, int begin, int end, int pixelsCount)
+        {
+            double varp = HistogramVariance(histogram, begin, end);//分散
+            if (double.IsNaN(varp) || varp == 0)
+                //分散が計算不能or0なら対象外になるように、大きな値(1.0)を返す
+                return 1.0;
+            else
+            {
+                double ratio = CountHistogram(histogram, begin, end);
+                ratio /= pixelsCount;//画素数比率
+                return ratio * Math.Log10(varp / ratio);
+            }
+        }
+
+        /// <summary>
+        /// ヒストグラムの指定範囲の分散を計算
+        /// </summary>
+        /// <param name="begin">範囲の始まり</param>
+        /// <param name="end">範囲の終わり(未満なので、100指定なら99まで計算する)</param>
+        /// <param name="count">範囲の画素数</param>
+        /// <param name="average">範囲の平均値</param>
+        /// <returns></returns>
+        private double HistogramVariance(int[] histogram, int begin, int end)
+        {
+            long squareTotal = 0;
+            long aveTotal = 0;
+            long count = 0;//要素数
+            for (long i = begin; i <= end; i++)
+            {
+                squareTotal += i * i * histogram[i];//2乗の累計
+                aveTotal += i * histogram[i];
+                count += histogram[i];
+            }
+            //平均値
+            double average = aveTotal / (double)count;
+            //分散 = 2乗の平均 - 平均値の2乗
+            return (squareTotal / (double)count) - (average * average);
+        }
+        private double HistogramVariance(int[] histogram, int begin, int end, double average)
+        {
+            long squareTotal = 0;
+            long count = 0;//要素数
+            for (long i = begin; i <= end; i++)
+            {
+                squareTotal += i * i * histogram[i];//2乗の累計            
+                count += histogram[i];
+            }
+            //分散 = 2乗の平均 - 平均値の2乗
+            return (squareTotal / (double)count) - (average * average);
+        }
+
         /// <summary>
         /// ヒストグラムから指定範囲の平均輝度値
         /// </summary>
         /// <param name="histogram">int型配列のヒストグラム</param>
         /// <param name="begin">範囲の始まり</param>
-        /// <param name="end">範囲の終わり(以下なので、100指定なら100まで計算する)</param>
+        /// <param name="end">範囲の終わり(未満まで計算する、100指定なら99まで計算する)</param>
         /// <param name="count">範囲内の画素数</param>
         /// <returns></returns>
         private double AverageHistogram(int[] histogram, int begin, int end, int count)
         {
-            double total = 0;
-            for (int i = begin; i <= end; i++)//"<"未満じゃなくて"<="以下まで計算する
+            long total = 0;
+            for (long i = begin; i <= end; i++)
             {
                 total += i * histogram[i];
             }
-            return total / count;
+            return total / (double)count;
         }
 
         /// <summary>
@@ -1048,15 +1157,13 @@ namespace _20200327_減色テストグレースケール
         /// </summary>
         /// <param name="histogram">int型配列のヒストグラム</param>
         /// <param name="begin">範囲の始まり</param>
-        /// <param name="end">範囲の終わり(以下なので、100指定なら100まで計算する)</param>
+        /// <param name="end">範囲の終わり(未満まで計算する、100指定なら99まで計算する)</param>
         /// <returns></returns>
         private int CountHistogram(int[] histogram, int begin, int end)
         {
             int count = 0;
-            for (int i = begin; i <= end; i++)//"<"未満じゃなくて"<="以下
+            for (int i = begin; i <= end; i++)
             {
-                //int val = histogram[i];
-                //if (val != 0) { count += val; }
                 count += histogram[i];
             }
             return count;
@@ -1096,6 +1203,7 @@ namespace _20200327_減色テストグレースケール
         SideCenter = 1,//辺の中央
         Median,//中央値
         Ootu,//大津の2値化
+        Kittler,//Kittlerの方法
     }
     //Cubeからの色選択タイプ
     public enum ColorSelectType
