@@ -448,43 +448,43 @@ namespace _20200327_減色テストグレースケール
 
         #region 誤差拡散で減色
         //右端判定と最下段判定が必要、これならこのクラスのフィールドにBitmapSourceを持たせたほうがいい？
-        public byte[] Gensyoku誤差拡散(byte[] pixels,int width,int height)
-        {
-            //元の配列をDouble型配列にコピー
-            double[] replacedPixels = new double[pixels.Length];
-            Array.Copy(pixels, replacedPixels, pixels.Length);
+        //public byte[] Gensyoku誤差拡散(byte[] pixels,int width,int height)
+        //{
+        //    //元の配列をDouble型配列にコピー
+        //    double[] replacedPixels = new double[pixels.Length];
+        //    Array.Copy(pixels, replacedPixels, pixels.Length);
 
-            for (int i = 0; i < pixels.Length; i++)
-            {
-                int nearIndex = 0;
-                var distance = Math.Abs(pixels[i]-Brightness[0]);
-                for (int k = 1; k < Brightness.Length; k++)
-                {
-                    var temp = Math.Abs(pixels[i] - Brightness[k]);
-                    if (temp < distance)
-                    {
-                        nearIndex = k;
-                        distance = temp;
-                    }
-                    replacedPixels[i] = Brightness[k];//色の置き換え
+        //    for (int i = 0; i < pixels.Length; i++)
+        //    {
+        //        int nearIndex = 0;
+        //        var distance = Math.Abs(pixels[i]-Brightness[0]);
+        //        for (int k = 1; k < Brightness.Length; k++)
+        //        {
+        //            var temp = Math.Abs(pixels[i] - Brightness[k]);
+        //            if (temp < distance)
+        //            {
+        //                nearIndex = k;
+        //                distance = temp;
+        //            }
+        //            replacedPixels[i] = Brightness[k];//色の置き換え
 
-                    //誤差拡散
-                    //  16  7
-                    //3  5  1
-                    //16が自分、7/16を右隣へ拡散、左下へ3/16
-                    double gosa = pixels[i] - Brightness[k];
-                    gosa /= 16;
-                    //100を120に置き換えたときの誤差は100-120=-20、誤差-20
-                    //右隣、-20*7/16=-8.75
-                    //左下、-20*3/16=-3.75
-                    //真下、-20*5/16=-6.25
-                    //右下、-20*1/16=-1.25
-                    if()
-                    replacedPixels[i + 1] += gosa * 7;
-                }
-            }
+        //            //誤差拡散
+        //            //  16  7
+        //            //3  5  1
+        //            //16が自分、7/16を右隣へ拡散、左下へ3/16
+        //            double gosa = pixels[i] - Brightness[k];
+        //            gosa /= 16;
+        //            //100を120に置き換えたときの誤差は100-120=-20、誤差-20
+        //            //右隣、-20*7/16=-8.75
+        //            //左下、-20*3/16=-3.75
+        //            //真下、-20*5/16=-6.25
+        //            //右下、-20*1/16=-1.25
+        //            if()
+        //            replacedPixels[i + 1] += gosa * 7;
+        //        }
+        //    }
 
-        }
+        //}
         #endregion 誤差拡散で減色
 
 
