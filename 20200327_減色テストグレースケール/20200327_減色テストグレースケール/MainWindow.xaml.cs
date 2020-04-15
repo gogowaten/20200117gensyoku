@@ -18,7 +18,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Collections.Concurrent;
 using System.IO;
-
+using System.Globalization;
 
 namespace _20200327_減色テストグレースケール
 {
@@ -29,9 +29,10 @@ namespace _20200327_減色テストグレースケール
     {
         byte[] MyOriginPixels;
         BitmapSource MyOriginBitmap;//元の画像用
-        //List<List<Color>> MyColorDataList = new List<List<Color>>();
+        
         List<Palette> MyPalettes = new List<Palette>();
-        Dictionary<Button, Palette> MyDictionary = new Dictionary<Button, Palette>();
+        List<StackPanel> MyPalettePanels = new List<StackPanel>();//パレットを格納しているスタックパネル
+        
         string ImageFileFullPath;//開いた画像ファイルのパス
 
         public MainWindow()
@@ -99,13 +100,32 @@ namespace _20200327_減色テストグレースケール
         //すべてのリストボックス消去
         private void ButtonListClear_Click(object sender, RoutedEventArgs e)
         {
-            ClearPalettes();
+            //ClearPalettes();
+            ClearPalettesWithoutIsChecked();
         }
         private void ClearPalettes()
         {
             MyPalettes.Clear();
             MyStackPanel.Children.Clear();
-            MyDictionary.Clear();
+            MyPalettePanels.Clear();
+            MyImage.Source = MyOriginBitmap;
+            TextBlockTime.Text = "";
+        }
+        //チェックのないパレットは削除
+        private void ClearPalettesWithoutIsChecked()
+        {
+            //チェックのないパレットとそれを格納しているスタックパネル列挙
+            var palettes = MyPalettes.Where(x => x.CheckBoxIsKeepPalette.IsChecked == false).ToList();
+            var panels = MyPalettePanels.Where(x => ((Palette)x.Tag).CheckBoxIsKeepPalette.IsChecked == false).ToList();
+            //削除
+            foreach (var item in palettes)
+            {
+                MyPalettes.Remove(item);
+            }
+            foreach (var item in panels)
+            {
+                MyStackPanel.Children.Remove(item);
+            }
             MyImage.Source = MyOriginBitmap;
             TextBlockTime.Text = "";
         }
@@ -183,6 +203,7 @@ namespace _20200327_減色テストグレースケール
             sw.Stop();
             TextBlockTime.Text = $"{sw.Elapsed.TotalSeconds:F3}({Enum.GetValues(typeof(ColorSelectType)).Length}個のパレット作成処理時間)";
         }
+
         //パレット一覧作成、Cube選択方法すべてのパレット
         private void MakePaletteAllSelectType(int colorCount)
         {
@@ -200,6 +221,7 @@ namespace _20200327_減色テストグレースケール
             sw.Stop();
             TextBlockTime.Text = $"{sw.Elapsed.TotalSeconds:F3}({Enum.GetValues(typeof(SelectType)).Length}個のパレット作成処理時間)";
         }
+
         //パレット一覧作成、Cube分割方法すべてのパレット
         private void MakePaletteAllSplitType(int colorCount)
         {
@@ -225,21 +247,29 @@ namespace _20200327_減色テストグレースケール
         {
             var palette = new Palette(colors);
             MyPalettes.Add(palette);
+
+            var panel = new StackPanel() { Orientation = Orientation.Horizontal };
+            panel.Tag = palette;
+            MyPalettePanels.Add(panel);
+
+
             var button = new Button() { Content = "減色" };//減色ボタン
             button.Click += ButtonGensyoku_Click;
-            var panel = new StackPanel() { Orientation = Orientation.Horizontal };
+            button.Tag = palette;//タグに対になるパレットを入れる
             panel.Children.Add(button);
+
             panel.Children.Add(palette);
             MyStackPanel.Children.Add(panel);//表示
             //表示更新
             this.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Background);
-            MyDictionary.Add(button, palette);
+            //MyDictionary.Add(button, palette);
         }
 
         private void ButtonGensyoku_Click(object sender, RoutedEventArgs e)
         {
             Button button = sender as Button;
-            Palette palette = MyDictionary[button];
+            Palette palette = (Palette)button.Tag;
+            //Palette palette = MyDictionary[button];
             var sw = new Stopwatch();
             sw.Start();
             //byte[] vs = palette.Gensyoku(MyOriginPixels);//変換テーブル不使用
@@ -343,8 +373,9 @@ namespace _20200327_減色テストグレースケール
         private void ButtonTest_Click(object sender, RoutedEventArgs e)
         {
 
-            var neko = MyDictionary;
+            var neko = MyStackPanel.Children;
 
+            var inu = MyPalettes[0].CheckBoxIsKeepPalette;
         }
 
         //画像を保存
@@ -444,6 +475,9 @@ namespace _20200327_減色テストグレースケール
     {
         List<Color> Colors { get; set; }
         byte[] Brightness;//各色の値、明度
+
+        //パレットクリア時にチェックが有れば残す用の目印
+        public CheckBox CheckBoxIsKeepPalette { get; private set; }
 
         ObservableCollection<MyData> Datas { get; set; }
         public Palette(List<Color> colors)
@@ -593,9 +627,13 @@ namespace _20200327_減色テストグレースケール
         private void MakePanelPalette(ListBox listBox, int colorCount)
         {
             this.Orientation = Orientation.Horizontal;
+
+            CheckBoxIsKeepPalette = new CheckBox() { VerticalAlignment = VerticalAlignment.Center };
+            this.Children.Add(CheckBoxIsKeepPalette);
+
             var tb = new TextBlock() { Text = $"{colorCount}色 ", VerticalAlignment = VerticalAlignment.Center };
-            //var button = new Button() { Content = "減色" };
             this.Children.Add(tb);
+
             this.Children.Add(listBox);
 
         }
@@ -1179,6 +1217,7 @@ namespace _20200327_減色テストグレースケール
         public SolidColorBrush Brush { get; set; }
         public string ColorCode { get; set; }
         public byte GrayScaleValue { get; set; }
+
         public MyData(Color color)
         {
             Brush = new SolidColorBrush(color);
@@ -1186,6 +1225,7 @@ namespace _20200327_減色テストグレースケール
             GrayScaleValue = color.R;
         }
     }
+
 
 
     //Cube選択タイプ

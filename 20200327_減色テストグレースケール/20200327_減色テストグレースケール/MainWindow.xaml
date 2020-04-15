@@ -19,7 +19,7 @@
     <Grid.ColumnDefinitions>
       <ColumnDefinition/>
       <!--<ColumnDefinition Width="auto"/>-->
-      <ColumnDefinition Width="320" MinWidth="320"/>
+      <ColumnDefinition Width="320" MinWidth="220"/>
     </Grid.ColumnDefinitions>
 
     <DockPanel Grid.Column="0" Name="MyImageDockPanel">
