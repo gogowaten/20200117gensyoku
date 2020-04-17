@@ -38,7 +38,8 @@ namespace _20200327_減色テストグレースケール
         public MainWindow()
         {
             InitializeComponent();
-            this.Title = this.ToString();
+            var neko = System.Diagnostics.FileVersionInfo.GetVersionInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            this.Title = neko.ProductName + " ver." + neko.FileVersion;
 
             MyInitialize();
 
@@ -446,6 +447,8 @@ namespace _20200327_減色テストグレースケール
 
 
         }
+
+        
         ////保存時の初期ファイル名取得
         //private string GetSaveFileName()
         //{
@@ -1227,6 +1230,19 @@ namespace _20200327_減色テストグレースケール
     }
 
 
+    public class MyConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            bool b = (bool)value;
+            return !b;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
 
     //Cube選択タイプ
     public enum SelectType

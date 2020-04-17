@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:_20200327_減色テストグレースケール"
         mc:Ignorable="d"
-         Title="MainWindow" Height="500" Width="614">
+        Title="MainWindow" Height="500" Width="614">
   <Window.Resources>
     <Style TargetType="StackPanel">
       <Setter Property="Margin" Value="4,1,0,0"/>
@@ -13,17 +13,18 @@
     <Style TargetType="Button">
       <Setter Property="Margin" Value="4,4,4,0"/>
     </Style>
+    <local:MyConverter x:Key="MMM"/>
   </Window.Resources>
   <Grid>
 
     <Grid.ColumnDefinitions>
       <ColumnDefinition/>
       <!--<ColumnDefinition Width="auto"/>-->
-      <ColumnDefinition Width="320" MinWidth="220"/>
+      <ColumnDefinition Width="330" MinWidth="220"/>
     </Grid.ColumnDefinitions>
 
     <DockPanel Grid.Column="0" Name="MyImageDockPanel">
-      <Button DockPanel.Dock="Top" x:Name="ButtonImageStretch" Content="実寸or全体" Margin="10"/>
+      <Button DockPanel.Dock="Top" x:Name="ButtonImageStretch" Content="表示切り替え(実寸 or 全体)" Margin="10"/>
       <ScrollViewer DockPanel.Dock="Top" x:Name="MyScrollViewerImage" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
         <Grid x:Name="MyImageGrid">
           <Image x:Name="MyImageOrigin" Stretch="None" UseLayoutRounding="True"/>
@@ -33,7 +34,7 @@
     </DockPanel>
 
     <!--WPF Tips(3) Splitterで画面を分割する - 気楽なソフト工房
-http://csfun.blog49.fc2.com/blog-entry-70.html-->    
+http://csfun.blog49.fc2.com/blog-entry-70.html-->
     <GridSplitter VerticalAlignment="Stretch" Width="4" Background="HotPink"/>
 
     <DockPanel Grid.Column="1" Width="auto">
@@ -59,25 +60,25 @@ http://csfun.blog49.fc2.com/blog-entry-70.html-->
           <RadioButton Content="選択" Grid.Column="0" Name="RadioButtonPaletteSelect"/>
           <RadioButton Content="分割" Grid.Column="1" Name="RadioButtonPaletteSplit"/>
           <RadioButton Content="色選択" Grid.Column="2" Name="RadioButtonPaletteColorSelect"/>
-          <RadioButton Content="フリー" Grid.Column="3" Name="RadioButtonPaletteFree" IsChecked="True"/>
+          <RadioButton Content="個別" Grid.Column="3" Name="RadioButtonPaletteFree" IsChecked="True"/>
         </Grid>
       </GroupBox>
 
-        <Button x:Name="ButtonListClear" Content="パレットリストクリア" DockPanel.Dock="Top"/>
+      <Button x:Name="ButtonListClear" Content="パレットリストクリア" DockPanel.Dock="Top"/>
       <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
         <StackPanel>
           <TextBlock Text="選択方法"/>
-          <ComboBox Name="ComboBoxSelectType"/>
+          <ComboBox Name="ComboBoxSelectType" IsEnabled="{Binding ElementName=RadioButtonPaletteSelect, Path=IsChecked, Converter={StaticResource MMM}}"/>
         </StackPanel>
         <TextBlock Text="+" VerticalAlignment="Bottom" Margin="4,0,0,4"/>
         <StackPanel>
           <TextBlock Text="分割方法"/>
-          <ComboBox Name="ComboBoxSplitType"/>
+          <ComboBox Name="ComboBoxSplitType" IsEnabled="{Binding ElementName=RadioButtonPaletteSplit, Path=IsChecked, Converter={StaticResource MMM}}"/>
         </StackPanel>
         <TextBlock Text="+" VerticalAlignment="Bottom" Margin="4,0,0,4"/>
         <StackPanel>
           <TextBlock Text="色選択方法"/>
-          <ComboBox Name="ComboBoxColorSelectType"/>
+          <ComboBox Name="ComboBoxColorSelectType" IsEnabled="{Binding ElementName=RadioButtonPaletteColorSelect, Path=IsChecked, Converter={StaticResource MMM}}"/>
         </StackPanel>
       </StackPanel>
       <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
