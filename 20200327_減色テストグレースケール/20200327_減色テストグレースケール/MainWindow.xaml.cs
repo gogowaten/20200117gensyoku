@@ -29,10 +29,10 @@ namespace _20200327_減色テストグレースケール
     {
         byte[] MyOriginPixels;
         BitmapSource MyOriginBitmap;//元の画像用
-        
+
         List<Palette> MyPalettes = new List<Palette>();
         List<StackPanel> MyPalettePanels = new List<StackPanel>();//パレットを格納しているスタックパネル
-        
+
         string ImageFileFullPath;//開いた画像ファイルのパス
 
         public MainWindow()
@@ -40,6 +40,7 @@ namespace _20200327_減色テストグレースケール
             InitializeComponent();
             var neko = System.Diagnostics.FileVersionInfo.GetVersionInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
             this.Title = neko.ProductName + " ver." + neko.FileVersion;
+
 
             MyInitialize();
 
@@ -270,11 +271,13 @@ namespace _20200327_減色テストグレースケール
         {
             Button button = sender as Button;
             Palette palette = (Palette)button.Tag;
-            //Palette palette = MyDictionary[button];
+
             var sw = new Stopwatch();
             sw.Start();
-            //byte[] vs = palette.Gensyoku(MyOriginPixels);//変換テーブル不使用
-            byte[] vs = palette.GensyokuUseTable(MyOriginPixels);//変換テーブル使用
+            
+            //変換テーブル使用
+            byte[] vs = Gensyoku.GensyokuUseTable(palette.Colors, MyOriginPixels);
+
             sw.Stop();
             TextBlockTime.Text = $"{sw.Elapsed.TotalSeconds:F3}(減色変換処理時間)";
             int stride = MyOriginBitmap.PixelWidth;// * MyOriginBitmap.Format.BitsPerPixel / 8;
@@ -448,7 +451,7 @@ namespace _20200327_減色テストグレースケール
 
         }
 
-        
+
         ////保存時の初期ファイル名取得
         //private string GetSaveFileName()
         //{
@@ -476,8 +479,7 @@ namespace _20200327_減色テストグレースケール
 
     public class Palette : StackPanel
     {
-        List<Color> Colors { get; set; }
-        byte[] Brightness;//各色の値、明度
+        public List<Color> Colors { get; private set; }
 
         //パレットクリア時にチェックが有れば残す用の目印
         public CheckBox CheckBoxIsKeepPalette { get; private set; }
@@ -487,7 +489,6 @@ namespace _20200327_減色テストグレースケール
         {
 
             Colors = colors;
-            SetBlightness(colors);
             //DataContext作成
             Datas = MakeDataContext(colors);
             //ListBox作成
@@ -552,81 +553,8 @@ namespace _20200327_減色テストグレースケール
         #endregion 誤差拡散で減色
 
 
-        #region 変換テーブルで減色
-        //変換テーブルを使った減色変換
-        public byte[] GensyokuUseTable(byte[] pixels)
-        {
-            byte[] replacedPixels = new byte[pixels.Length];
-
-            //使用されている明度値の配列作成
-            byte[] usedColor = MakeUsedColorList(pixels);
-            //変換テーブル作成
-            Dictionary<byte, byte> table = MakeTable(usedColor);
-
-            //変換
-            for (int i = 0; i < pixels.Length; i++)
-            {
-                replacedPixels[i] = table[pixels[i]];
-            }
-            return replacedPixels;
-        }
-
-        //変換テーブル作成、この色はこの色に変換するっていうテーブル
-        private Dictionary<byte, byte> MakeTable(byte[] usedColor)
-        {
-            var table = new Dictionary<byte, byte>(usedColor.Length);
-            for (int i = 0; i < usedColor.Length; i++)
-            {
-                int nearIndex = 0;
-                var distance = 255;
-                for (int k = 0; k < Brightness.Length; k++)
-                {
-                    var temp = Math.Abs(Brightness[k] - usedColor[i]);
-                    if (temp < distance)
-                    {
-                        distance = temp;
-                        nearIndex = k;
-                    }
-                }
-                table.Add(usedColor[i], Brightness[nearIndex]);
-            }
-            return table;
-        }
-        //使用されている明度値の配列作成
-        private byte[] MakeUsedColorList(byte[] pixels)
-        {
-            //明度値をIndexに見立てて使用されていればtrue
-            var temp = new bool[256];
-            for (int i = 0; i < pixels.Length; i++)
-            {
-                temp[pixels[i]] = true;
-            }
-            //trueのIndexのリスト作成
-            var colors = new List<byte>();
-            for (int i = 0; i < temp.Length; i++)
-            {
-                if (temp[i]) colors.Add((byte)i);
-            }
-            //リストを配列に変換
-            var vs = new byte[colors.Count];
-            for (int i = 0; i < vs.Length; i++)
-            {
-                vs[i] = colors[i];
-            }
-            return vs;
-        }
-        #endregion 変換テーブルで減色
-
 
         #region 表示、初期化
-        private void SetBlightness(List<Color> colors)
-        {
-            Brightness = new byte[colors.Count];
-            for (int i = 0; i < colors.Count; i++)
-            {
-                Brightness[i] = colors[i].R;
-            }
-        }
         private void MakePanelPalette(ListBox listBox, int colorCount)
         {
             this.Orientation = Orientation.Horizontal;
