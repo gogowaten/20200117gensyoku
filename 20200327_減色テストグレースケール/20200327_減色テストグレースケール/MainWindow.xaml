@@ -37,16 +37,14 @@
 http://csfun.blog49.fc2.com/blog-entry-70.html-->
     <GridSplitter VerticalAlignment="Stretch" Width="4" Background="HotPink"/>
 
-    <DockPanel Grid.Column="1" Width="auto">
-      <StackPanel DockPanel.Dock="Top">
-        <Button x:Name="ButtonGetClipboardImage" Content="クリップボードの画像取得"/>
-      </StackPanel>
+    <DockPanel Grid.Column="1" Width="auto">      
       <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Height="30">
+        <Button x:Name="ButtonGetClipboardImage" Content="画像貼り付け"/>
+        <Button x:Name="ButtonSetClipboardImage" Content="画像コピー" Click="ButtonSetClipboardImage_Click"/>
         <Button x:Name="ButtonSave" Content="画像保存" Click="ButtonSave_Click"/>
-        <!--<Button x:Name="ButtonTest" Content="test" Click="ButtonTest_Click"/>-->
+        <Button x:Name="ButtonTest" Content="test" Click="ButtonTest_Click"/>
         <Button x:Name="ButtonColorSort" Content="色ソート" Click="ButtonColorSort_Click"/>
-        <!--<RadioButton Content="保存時のbpp"/>
-        <TextBlock Text="パレット作成識別"/>-->
+        
       </StackPanel>
 
       <GroupBox DockPanel.Dock="Top" Header="パレット一覧作成タイプ">
@@ -99,6 +97,7 @@ http://csfun.blog49.fc2.com/blog-entry-70.html-->
         <Button Content="256" Click="ButtonMakePalette_Click"/>
       </StackPanel>
       <TextBlock DockPanel.Dock="Top" x:Name="TextBlockTime" Text="処理時間" Margin="4"/>
+      <CheckBox DockPanel.Dock="Top" x:Name="CheckBoxErrorDiffusion" Content="誤差拡散使用" IsChecked="False"/>
       <ScrollViewer DockPanel.Dock="Top" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
         <StackPanel x:Name="MyStackPanel"/>
       </ScrollViewer>

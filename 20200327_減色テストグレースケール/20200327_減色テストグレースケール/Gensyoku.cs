@@ -35,33 +35,59 @@ namespace _20200327_減色テストグレースケール
             Array.Copy(source, gosaPixels, count);
             int p;//座標
             double gosa;//誤差(変換前 - 変換後)
-            //変換テーブル作成は全色分(0~255)作成
-            var cc = Enumerable.Range(0, 255).Select(x => (byte)x).ToArray();//?
-            Dictionary<byte, byte> table = MakeTable(cc, palette);
+            ////変換テーブル作成は全色分(0~255)作成
+            //var cc = Enumerable.Range(0, 256).Select(x => (byte)x).ToArray();//?
+            //Dictionary<byte, byte> table = MakeTable(cc, palette);
 
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)
                 {
                     p = y * stride + x;
-                    pixels[p] = table[source[p]];
-                    gosa = pixels[p] - source[p];//?
+                    //pixels[p] = table[source[p]];
+                    double min = double.MaxValue;
+                    double distance;
+                    byte color = palette[0];
+                    for (int i = 0; i < palette.Length; i++)
+                    {
+                        distance = Math.Abs(gosaPixels[p] - palette[i]);
+                        if (distance < min)
+                        {
+                            min = distance;
+                            color = palette[i];
+                        }
+                    }
+                    pixels[p] = color;
+                    gosa = gosaPixels[p] - color;
                     gosa /= 16.0;
                     if (x < width - 1)
-                        gosaPixels[p + 1] += gosa * 7;
+                        SetLimitedGosa(gosaPixels, p + 1, gosa * 7, 0, 255);
+                    //gosaPixels[p + 1] += gosa * 7;
                     if (y < height - 1)
                     {
                         p += stride;
-                        gosaPixels[p] += gosa * 5;
+                        SetLimitedGosa(gosaPixels, p, gosa * 5, 0, 255);
+                        //gosaPixels[p] += gosa * 5;
                         if (x > 0)
-                            gosaPixels[p - 1] += gosa * 3;
+                            SetLimitedGosa(gosaPixels, p - 1, gosa * 3, 0, 255);
+                        //gosaPixels[p - 1] += gosa * 3;
                         if (x < width - 1)
-                            gosaPixels[p + 1] += gosa * 1;
+                            SetLimitedGosa(gosaPixels, p + 1, gosa * 1, 0, 255);
+                        //gosaPixels[p + 1] += gosa * 1;
 
                     }
                 }
             }
             return pixels;
+        }
+        private static void SetLimitedGosa(double[] gosaPixels, int p, double gosa, byte lower, byte upper)
+        {
+            double result = gosaPixels[p] + gosa;
+            if (result < lower)
+                result = lower;
+            if (result > upper)
+                result = upper;
+            gosaPixels[p] = result;
         }
         public static BitmapSource Gensyoku誤差拡散(BitmapSource bitmap, byte[] palette)
         {
@@ -73,27 +99,24 @@ namespace _20200327_減色テストグレースケール
             byte[] pixels = Gensyoku誤差拡散(palette, sourcePixels, w, h, stride);
             return BitmapSource.Create(w, h, 96, 96, PixelFormats.Gray8, null, pixels, stride);
         }
+        public static BitmapSource Gensyoku誤差拡散(BitmapSource bitmap, List<Color> palette)
+        {
+            byte[] vs = palette.Select(x => x.R).ToArray();
+            return Gensyoku誤差拡散(bitmap, vs);
+        }
 
-        /// <summary>
-        /// 誤差拡散、FloydSteinberg、PixelFormat.Gray8グレースケール画像専用
-        /// </summary>
-        /// <param name="source">元画像のピクセルの輝度値</param>
-        /// <param name="width"></param>
-        /// <param name="height"></param>
-        /// <param name="stride">横1行分のbyte数</param>
-        /// <returns></returns>
 
         #endregion  誤差拡散を使った減色
 
 
         #region 変換テーブルで減色
-        public static byte[] GensyokuUseTable(List<Color> colors, byte[] pixels)
+        public static byte[] GensyokuUseTable(byte[] pixels, List<Color> colors)
         {
-            return GensyokuUseTable(colors.Select(x => x.R).ToArray(), pixels);
+            return GensyokuUseTable(pixels, colors.Select(x => x.R).ToArray());
         }
 
         //変換テーブルを使った減色変換
-        public static byte[] GensyokuUseTable(byte[] brightness, byte[] pixels)
+        public static byte[] GensyokuUseTable(byte[] pixels, byte[] brightness)
         {
             byte[] replacedPixels = new byte[pixels.Length];
 
@@ -109,7 +132,21 @@ namespace _20200327_減色テストグレースケール
             }
             return replacedPixels;
         }
+        public static BitmapSource GensyokuUseTable(BitmapSource bitmap, byte[] palette)
+        {
+            int w = bitmap.PixelWidth;
+            int h = bitmap.PixelHeight;
+            int stride = w;// (bitmap.Format.BitsPerPixel + 7) / 8;
+            byte[] sourcePixels = new byte[h * stride];
+            bitmap.CopyPixels(sourcePixels, stride, 0);
 
+            var vs = GensyokuUseTable(sourcePixels, palette);
+            return BitmapSource.Create(w, h, 96, 96, PixelFormats.Gray8, null, vs, stride);
+        }
+        public static BitmapSource GensyokuUseTable(BitmapSource bitmap, List<Color> palette)
+        {
+            return GensyokuUseTable(bitmap, palette.Select(x => x.R).ToArray());
+        }
 
         //変換テーブル作成、この色はこの色に変換するっていうテーブル
         private static Dictionary<byte, byte> MakeTable(byte[] usedColor, byte[] brightness)

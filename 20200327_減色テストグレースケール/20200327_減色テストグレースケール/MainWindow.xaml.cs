@@ -267,23 +267,33 @@ namespace _20200327_減色テストグレースケール
             //MyDictionary.Add(button, palette);
         }
 
+        //減色処理実行
         private void ButtonGensyoku_Click(object sender, RoutedEventArgs e)
         {
             Button button = sender as Button;
             Palette palette = (Palette)button.Tag;
-
+            GensyokuExe(palette);
+        }
+        private void GensyokuExe(Palette palette)
+        {
             var sw = new Stopwatch();
             sw.Start();
-            
-            //変換テーブル使用
-            byte[] vs = Gensyoku.GensyokuUseTable(palette.Colors, MyOriginPixels);
-
+            if (CheckBoxErrorDiffusion.IsChecked == true)
+            {
+                //誤差拡散
+                MyImage.Source = Gensyoku.Gensyoku誤差拡散(MyOriginBitmap, palette.Colors);
+            }
+            else
+            {
+                //変換テーブル使用
+                MyImage.Source = Gensyoku.GensyokuUseTable(MyOriginBitmap, palette.Colors);
+            }
             sw.Stop();
             TextBlockTime.Text = $"{sw.Elapsed.TotalSeconds:F3}(減色変換処理時間)";
-            int stride = MyOriginBitmap.PixelWidth;// * MyOriginBitmap.Format.BitsPerPixel / 8;
-            MyImage.Source = BitmapSource.Create(MyOriginBitmap.PixelWidth, MyOriginBitmap.PixelHeight, 96, 96, MyOriginBitmap.Format, null, vs, stride);
-        }
 
+            //int stride = MyOriginBitmap.PixelWidth;// * MyOriginBitmap.Format.BitsPerPixel / 8;
+            //MyImage.Source = BitmapSource.Create(MyOriginBitmap.PixelWidth, MyOriginBitmap.PixelHeight, 96, 96, MyOriginBitmap.Format, null, vs, stride);
+        }
 
 
 
@@ -376,10 +386,10 @@ namespace _20200327_減色テストグレースケール
 
         private void ButtonTest_Click(object sender, RoutedEventArgs e)
         {
+            MakePaletteStackPanel(new List<Color> { Color.FromRgb(0, 0, 0), Color.FromRgb(85, 85, 85), Color.FromRgb(170, 170, 170), Color.FromRgb(255, 255, 255) });
+            //var neko = MyStackPanel.Children;
 
-            var neko = MyStackPanel.Children;
 
-            var inu = MyPalettes[0].CheckBoxIsKeepPalette;
         }
 
         //画像を保存
@@ -449,6 +459,13 @@ namespace _20200327_減色テストグレースケール
             }
 
 
+        }
+
+        //クリップボードにコピー
+        private void ButtonSetClipboardImage_Click(object sender, RoutedEventArgs e)
+        {
+            if (MyImage.Source == null) return;
+            Clipboard.SetImage((BitmapSource)MyImage.Source);
         }
 
 
