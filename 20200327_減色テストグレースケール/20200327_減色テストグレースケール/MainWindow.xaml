@@ -43,7 +43,7 @@ http://csfun.blog49.fc2.com/blog-entry-70.html-->
       </StackPanel>
       <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Height="30">
         <Button x:Name="ButtonSave" Content="画像保存" Click="ButtonSave_Click"/>
-        <Button x:Name="ButtonTest" Content="test" Click="ButtonTest_Click"/>
+        <!--<Button x:Name="ButtonTest" Content="test" Click="ButtonTest_Click"/>-->
         <Button x:Name="ButtonColorSort" Content="色ソート" Click="ButtonColorSort_Click"/>
         <!--<RadioButton Content="保存時のbpp"/>
         <TextBlock Text="パレット作成識別"/>-->
