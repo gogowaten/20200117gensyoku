@@ -27,7 +27,7 @@ namespace _20200327_減色テストグレースケール
     /// </summary>
     public partial class MainWindow : Window
     {
-        byte[] MyOriginPixels;
+        //byte[] MyOriginPixels;
         BitmapSource MyOriginBitmap;//元の画像用
 
         List<Palette> MyPalettes = new List<Palette>();
@@ -150,7 +150,7 @@ namespace _20200327_減色テストグレースケール
         //減色パレット作成
         private void MakePaletteColor(int colorCount)
         {
-            if (MyOriginPixels == null) return;
+            if (MyOriginBitmap == null) return;
 
             var sw = new Stopwatch();
             sw.Start();
@@ -182,7 +182,7 @@ namespace _20200327_減色テストグレースケール
             if (MyOriginBitmap == null) return null;
             SelectType selecter = (SelectType)ComboBoxSelectType.SelectedItem;
             SplitType splitter = (SplitType)ComboBoxSplitType.SelectedItem;
-            var cube = new Cube(MyOriginPixels);
+            var cube = new Cube(MyOriginBitmap);
             cube.Split(colorCount, selecter, splitter);//分割数指定でCube分割
             return cube;
         }
@@ -212,7 +212,7 @@ namespace _20200327_減色テストグレースケール
             if (MyOriginBitmap == null) return;
             var sw = new Stopwatch();
             sw.Start();
-            var cube = new Cube(MyOriginPixels);
+            var cube = new Cube(MyOriginBitmap);
             var splitter = (SplitType)ComboBoxSplitType.SelectedItem;
             var colorType = (ColorSelectType)ComboBoxColorSelectType.SelectedItem;
             foreach (var type in Enum.GetValues(typeof(SelectType)))
@@ -230,7 +230,7 @@ namespace _20200327_減色テストグレースケール
             if (MyOriginBitmap == null) return;
             var sw = new Stopwatch();
             sw.Start();
-            var cube = new Cube(MyOriginPixels);
+            var cube = new Cube(MyOriginBitmap);
             var selecter = (SelectType)ComboBoxSelectType.SelectedItem;
             var colorType = (ColorSelectType)ComboBoxColorSelectType.SelectedItem;
             foreach (var type in Enum.GetValues(typeof(SplitType)))
@@ -306,12 +306,12 @@ namespace _20200327_減色テストグレースケール
             MyOriginBitmap = new FormatConvertedBitmap(MyOriginBitmap, PixelFormats.Gray8, null, 0);
             MyImageOrigin.Source = MyOriginBitmap;
             MyImage.Source = MyOriginBitmap;
-            int w = MyOriginBitmap.PixelWidth;
-            int h = MyOriginBitmap.PixelHeight;
-            int stride = w * 1;
-            byte[] pixels = new byte[h * stride];
-            MyOriginBitmap.CopyPixels(pixels, stride, 0);
-            MyOriginPixels = pixels;
+            //int w = MyOriginBitmap.PixelWidth;
+            //int h = MyOriginBitmap.PixelHeight;
+            //int stride = w * 1;
+            //byte[] pixels = new byte[h * stride];
+            //MyOriginBitmap.CopyPixels(pixels, stride, 0);
+            //MyOriginPixels = pixels;
             ClearPalettes();//パレットリスト初期化
         }
 
@@ -328,7 +328,7 @@ namespace _20200327_減色テストグレースケール
             else
             {
                 MyOriginBitmap = source;
-                MyOriginPixels = pixels;
+                //MyOriginPixels = pixels;
                 MyImageOrigin.Source = source;
                 MyImage.Source = source;
                 ClearPalettes();//パレットリスト初期化
@@ -536,11 +536,13 @@ namespace _20200327_減色テストグレースケール
         #region 表示、初期化
         private void MakePanelPalette(ListBox listBox, int colorCount)
         {
-            this.Orientation = Orientation.Horizontal;
+            this.Orientation = Orientation.Horizontal;//横積み
 
+            //キープするパレット
             CheckBoxIsKeepPalette = new CheckBox() { VerticalAlignment = VerticalAlignment.Center };
             this.Children.Add(CheckBoxIsKeepPalette);
 
+            //色数表示用
             var tb = new TextBlock() { Text = $"{colorCount}色 ", VerticalAlignment = VerticalAlignment.Center };
             this.Children.Add(tb);
 
@@ -578,8 +580,8 @@ namespace _20200327_減色テストグレースケール
             //ItemTemplate作成、Bindingも設定する
             //縦積みのstackPanelにBorderとTextBlock
             //StackPanel(縦積み)
-            //┣Border
-            //┗TextBlock
+            //┣Border 色表示用
+            //┗TextBlock 値表示用
             var border = new FrameworkElementFactory(typeof(Border));
             border.SetValue(Border.WidthProperty, 20.0);
             border.SetValue(Border.HeightProperty, 10.0);
@@ -620,9 +622,18 @@ namespace _20200327_減色テストグレースケール
         public bool IsHistogram = false;//ヒストグラムを作成したフラグ用
 
 
-        public Cube(byte[] pixels)
+        public Cube(BitmapSource bitmapSource)
         {
+            int w = bitmapSource.PixelWidth;
+            int h = bitmapSource.PixelHeight;
+            int stride = w;
+            byte[] pixels = new byte[h * stride];
+            bitmapSource.CopyPixels(pixels, stride, 0);
             Pixels = pixels;
+        }
+        public Cube(byte[] piexels)
+        {
+            this.Pixels = piexels;
         }
 
         /// <summary>
