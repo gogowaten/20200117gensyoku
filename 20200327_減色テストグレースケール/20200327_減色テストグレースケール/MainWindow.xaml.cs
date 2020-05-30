@@ -32,6 +32,7 @@ namespace _20200327_減色テストグレースケール
 
         List<Palette> MyPalettes = new List<Palette>();
         List<StackPanel> MyPalettePanels = new List<StackPanel>();//パレットを格納しているスタックパネル
+        //CheckBox CheckBoxIsKeepPalette;//パレットキープ判定用
 
         string ImageFileFullPath;//開いた画像ファイルのパス
 
@@ -98,13 +99,7 @@ namespace _20200327_減色テストグレースケール
             }
         }
 
-
-        //すべてのリストボックス消去
-        private void ButtonListClear_Click(object sender, RoutedEventArgs e)
-        {
-            //ClearPalettes();
-            ClearPalettesWithoutIsChecked();
-        }
+        //パレットリスト初期化
         private void ClearPalettes()
         {
             MyPalettes.Clear();
@@ -113,21 +108,30 @@ namespace _20200327_減色テストグレースケール
             MyImage.Source = MyOriginBitmap;
             TextBlockTime.Text = "";
         }
-        //チェックのないパレットは削除
+
+        //パレットリストボックス消去
+        private void ButtonListClear_Click(object sender, RoutedEventArgs e)
+        {
+            //ClearPalettes();
+            ClearPalettesWithoutIsChecked();
+        }
+
+//        wpf - c# stackpanelの子要素の取得について - スタック・オーバーフロー
+//https://ja.stackoverflow.com/questions/42117/c-stackpanel%E3%81%AE%E5%AD%90%E8%A6%81%E7%B4%A0%E3%81%AE%E5%8F%96%E5%BE%97%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6
+
+        //チェックの入っていないパレットは削除
         private void ClearPalettesWithoutIsChecked()
         {
-            //チェックのないパレットとそれを格納しているスタックパネル列挙
-            var palettes = MyPalettes.Where(x => x.CheckBoxIsKeepPalette.IsChecked == false).ToList();
-            var panels = MyPalettePanels.Where(x => ((Palette)x.Tag).CheckBoxIsKeepPalette.IsChecked == false).ToList();
-            //削除
-            foreach (var item in palettes)
-            {
-                MyPalettes.Remove(item);
-            }
-            foreach (var item in panels)
-            {
-                MyStackPanel.Children.Remove(item);
-            }
+            foreach (var item in MyPalettePanels)
+                foreach (CheckBox cbox in item.Children.OfType<CheckBox>())
+                {
+                    if (cbox.IsChecked == false)
+                    {
+                        MyStackPanel.Children.Remove(item);
+                        break;
+                    }
+                }
+        
             MyImage.Source = MyOriginBitmap;
             TextBlockTime.Text = "";
         }
@@ -176,6 +180,7 @@ namespace _20200327_減色テストグレースケール
             ////MyStackPanel.Children.Add(list);
             //MyStackPanel.Children.Add(MakePanelPalette(list, colors.Count));
         }
+
         //指定色数に分割したCube作成
         private Cube MakeSplittedCube(int colorCount)
         {
@@ -254,11 +259,18 @@ namespace _20200327_減色テストグレースケール
             panel.Tag = palette;
             MyPalettePanels.Add(panel);
 
+            //Cube形式表示用
+            panel.Children.Add(new TextBlock() { Text = "test" + "\n" + "test" + "\n" + "test3" });
 
-            var button = new Button() { Content = "減色" };//減色ボタン
+            //減色ボタン作成
+            var button = new Button() { Content = "減色" };
             button.Click += ButtonGensyoku_Click;
             button.Tag = palette;//タグに対になるパレットを入れる
             panel.Children.Add(button);
+
+            //キープ判定用チェックボックス
+            CheckBox CheckBoxIsKeepPalette = new CheckBox() { VerticalAlignment = VerticalAlignment.Center };
+            panel.Children.Add(CheckBoxIsKeepPalette);
 
             panel.Children.Add(palette);
             MyStackPanel.Children.Add(panel);//表示
@@ -483,24 +495,21 @@ namespace _20200327_減色テストグレースケール
 
 
 
-
-
-
-
-
-
-
-
-
     }
+
+
+
+
+
+
 
 
     public class Palette : StackPanel
     {
         public List<Color> Colors { get; private set; }
 
-        //パレットクリア時にチェックが有れば残す用の目印
-        public CheckBox CheckBoxIsKeepPalette { get; private set; }
+        ////パレットクリア時にチェックが有れば残す用の目印
+        //public CheckBox CheckBoxIsKeepPalette { get; private set; }
 
         ObservableCollection<MyData> Datas { get; set; }
         public Palette(List<Color> colors)
@@ -529,7 +538,7 @@ namespace _20200327_減色テストグレースケール
             cv.SortDescriptions.Add(new System.ComponentModel.SortDescription(nameof(MyData.GrayScaleValue), listSortDirection));
         }
 
-       
+
 
 
 
@@ -538,9 +547,10 @@ namespace _20200327_減色テストグレースケール
         {
             this.Orientation = Orientation.Horizontal;//横積み
 
-            //キープするパレット
-            CheckBoxIsKeepPalette = new CheckBox() { VerticalAlignment = VerticalAlignment.Center };
-            this.Children.Add(CheckBoxIsKeepPalette);
+
+            ////キープするパレット判定用
+            //CheckBoxIsKeepPalette = new CheckBox() { VerticalAlignment = VerticalAlignment.Center };
+            //this.Children.Add(CheckBoxIsKeepPalette);
 
             //色数表示用
             var tb = new TextBlock() { Text = $"{colorCount}色 ", VerticalAlignment = VerticalAlignment.Center };
