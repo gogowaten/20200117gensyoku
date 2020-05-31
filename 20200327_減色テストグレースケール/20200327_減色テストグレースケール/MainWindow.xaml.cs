@@ -166,7 +166,7 @@ namespace _20200327_減色テストグレースケール
             List<Color> colors = cube.GetColors((ColorSelectType)ComboBoxColorSelectType.SelectedItem);
 
             //パレット作成して追加表示
-            MakePaletteStackPanel(colors);
+            MakePaletteStackPanel(colors,cube);
 
             sw.Stop();
             //TextBlockTime.Text = $"{sw.Elapsed.TotalSeconds.ToString("F3")}";
@@ -205,7 +205,7 @@ namespace _20200327_減色テストグレースケール
             {
                 //Cubeから色取得して、色データ作成
                 //パレット作成して追加表示
-                MakePaletteStackPanel(cube.GetColors((ColorSelectType)item));
+                MakePaletteStackPanel(cube.GetColors((ColorSelectType)item),cube);
             }
             sw.Stop();
             TextBlockTime.Text = $"{sw.Elapsed.TotalSeconds:F3}({Enum.GetValues(typeof(ColorSelectType)).Length}個のパレット作成処理時間)";
@@ -223,7 +223,7 @@ namespace _20200327_減色テストグレースケール
             foreach (var type in Enum.GetValues(typeof(SelectType)))
             {
                 cube.Split(colorCount, (SelectType)type, splitter);
-                MakePaletteStackPanel(cube.GetColors(colorType));
+                MakePaletteStackPanel(cube.GetColors(colorType),cube);
             }
             sw.Stop();
             TextBlockTime.Text = $"{sw.Elapsed.TotalSeconds:F3}({Enum.GetValues(typeof(SelectType)).Length}個のパレット作成処理時間)";
@@ -241,7 +241,7 @@ namespace _20200327_減色テストグレースケール
             foreach (var type in Enum.GetValues(typeof(SplitType)))
             {
                 cube.Split(colorCount, selecter, (SplitType)type);
-                MakePaletteStackPanel(cube.GetColors(colorType));
+                MakePaletteStackPanel(cube.GetColors(colorType),cube);
             }
             sw.Stop();
             TextBlockTime.Text = $"{sw.Elapsed.TotalSeconds:F3}({Enum.GetValues(typeof(SplitType)).Length}個のパレット作成処理時間)";
@@ -250,17 +250,23 @@ namespace _20200327_減色テストグレースケール
 
 
         //List<Color>からパレット作成して減色ボタン付きstackPanel作成してstackPanelに追加
-        private void MakePaletteStackPanel(List<Color> colors)
+        private void MakePaletteStackPanel(List<Color> colors,Cube cube)
         {
             var palette = new Palette(colors);
             MyPalettes.Add(palette);
 
-            var panel = new StackPanel() { Orientation = Orientation.Horizontal };
+            var panel = new StackPanel() { Orientation = Orientation.Horizontal ,Margin=new Thickness(0,0,2,2)};
             panel.Tag = palette;
             MyPalettePanels.Add(panel);
 
             //Cube形式表示用
-            panel.Children.Add(new TextBlock() { Text = "test" + "\n" + "test" + "\n" + "test3" });
+            //panel.Children.Add(new TextBlock() { Text = "test" + "\n" + "test" + "\n" + "test3" });
+            panel.Children.Add(new TextBlock()
+            {
+                Text = cube.CubeSelectType.ToString() + "\n" +
+                cube.CubeSplitType.ToString() + "\n" +
+                cube.CubeColorSelectType.ToString()
+            }) ;
 
             //減色ボタン作成
             var button = new Button() { Content = "減色" };
@@ -398,8 +404,8 @@ namespace _20200327_減色テストグレースケール
 
         private void ButtonTest_Click(object sender, RoutedEventArgs e)
         {
-            MakePaletteStackPanel(new List<Color> { Color.FromRgb(0, 0, 0), Color.FromRgb(85, 85, 85), Color.FromRgb(170, 170, 170), Color.FromRgb(255, 255, 255) });
-            MakePaletteStackPanel(new List<Color> { Color.FromRgb(0, 0, 0), Color.FromRgb(255, 255, 255) });
+            //MakePaletteStackPanel(new List<Color> { Color.FromRgb(0, 0, 0), Color.FromRgb(85, 85, 85), Color.FromRgb(170, 170, 170), Color.FromRgb(255, 255, 255) });
+            //MakePaletteStackPanel(new List<Color> { Color.FromRgb(0, 0, 0), Color.FromRgb(255, 255, 255) });
             //var neko = MyStackPanel.Children;
 
 
@@ -630,7 +636,9 @@ namespace _20200327_減色テストグレースケール
         public bool IsCalcVariance = false;//分散を計算済みフラグ用
         public int[] Histogram;//大津の2値化や、Kittlerの方法用ヒストグラム
         public bool IsHistogram = false;//ヒストグラムを作成したフラグ用
-
+        public SelectType CubeSelectType { get; private set; }
+        public SplitType CubeSplitType { get; private set; }
+        public ColorSelectType CubeColorSelectType { get; private set; }
 
         public Cube(BitmapSource bitmapSource)
         {
@@ -656,6 +664,9 @@ namespace _20200327_減色テストグレースケール
         {
             Cubes.Clear();
             Cubes.Add(this);
+            CubeSelectType = select;
+            CubeSplitType = split;
+
             var confirmCubes = new List<Cube>();//これ以上分割できないCube隔離用
             while (Cubes.Count + confirmCubes.Count < count)
             {
@@ -957,6 +968,8 @@ namespace _20200327_減色テストグレースケール
         #region 色取得、Cubesから色の抽出
         public List<Color> GetColors(ColorSelectType type)
         {
+            CubeColorSelectType = type;
+
             var colors = new List<Color>();
             if (type == ColorSelectType.Average)
             {
